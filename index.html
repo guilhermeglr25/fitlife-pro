@@ -1,0 +1,2878 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- PWA Configuration -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#3b82f6">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FitLife Pro">
+
+<!-- iOS Specific -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FitLife Pro">
+<link rel="apple-touch-icon" href="/icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="167x167" href="/icons/icon-192.png">
+
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-72.png">
+
+  <title>FitLife Pro - Seu Coach Pessoal com IA</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+    body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; }
+    
+    .dark body { background-color: #0f172a; color: #e2e8f0; }
+    .dark .bg-white { background-color: #1e293b !important; }
+    .dark .bg-gray-50 { background-color: #0f172a !important; }
+    .dark .bg-gray-100 { background-color: #1e293b !important; }
+    .dark .text-gray-800 { color: #e2e8f0 !important; }
+    .dark .text-gray-700 { color: #cbd5e1 !important; }
+    .dark .text-gray-600 { color: #94a3b8 !important; }
+    .dark .border-gray-100 { border-color: #334155 !important; }
+    .dark .border-gray-200 { border-color: #475569 !important; }
+    
+    .chat-scroll::-webkit-scrollbar { width: 6px; }
+    .chat-scroll::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+    .chat-scroll::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; }
+    .dark .chat-scroll::-webkit-scrollbar-track { background: #1e293b; }
+    .dark .chat-scroll::-webkit-scrollbar-thumb { background: #475569; }
+    
+    @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    .animate-slide-in { animation: slideIn 0.3s ease-out; }
+    @keyframes slideUp { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .animate-slide-up { animation: slideUp 0.3s ease-out; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .animate-pulse-slow { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+    
+    @media (max-width: 768px) {
+      .mobile-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-top: 2px solid #e5e7eb;
+        padding: 0.5rem 0;
+        z-index: 50;
+        box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+      }
+      .dark .mobile-nav {
+        background: #1e293b;
+        border-top-color: #334155;
+      }
+      .content-with-nav {
+        padding-bottom: 80px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    const Icons = {
+      Dumbbell: () => (<svg className="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6.5 6L6.5 18M17.5 6L17.5 18M3 8L3 16M21 8L21 16M6.5 6L3 8M6.5 18L3 16M17.5 6L21 8M17.5 18L21 16M9 12L15 12"/></svg>),
+      Apple: () => (<svg className="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><circle cx="9" cy="9" r="1"/><circle cx="15" cy="9" r="1"/><path d="M12 2v4"/></svg>),
+      Camera: () => (<svg className="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>),
+      User: () => (<svg className="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>),
+      Fire: () => (<svg className="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>),
+      Trophy: () => (<svg className="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>),
+      Scale: () => (<svg className="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v20M8 6H4a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h4m0-7h8m-8 0v7m8-7h4a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-4m0-7v7"/></svg>),
+      Sun: () => (<svg className="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>),
+      Moon: () => (<svg className="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>),
+      Utensils: () => (<svg className="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg>),
+      Sparkles: () => (<svg className="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3l1.912 5.813L20 11l-6.088 2.187L12 21l-1.912-7.813L4 11l6.088-2.187L12 3z"/></svg>),
+      Bot: () => (<svg className="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4M8 16h.01M16 16h.01"/></svg>),
+      Send: () => (<svg className="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>),
+      Edit: () => (<svg className="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>),
+      X: () => (<svg className="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>),
+      Check: () => (<svg className="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 6L9 17l-5-5"/></svg>),
+      Plus: () => (<svg className="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>),
+      History: () => (<svg className="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>),
+      Home: () => (<svg className="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>),
+      Target: () => (<svg className="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>),
+      Trash: () => (<svg className="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>),
+      RefreshCw: () => (<svg className="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>),
+      Zap: () => (<svg className="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>),
+      TrendingUp: () => (<svg className="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>),
+      Activity: () => (<svg className="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>),
+      Award: () => (<svg className="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>)
+    };
+
+    const AIChat = React.memo(({ chatOpen, setChatOpen, chatMessages, setChatMessages, chatInput, setChatInput, isTyping, sendChatMessage, chatEndRef, darkMode, subscriptionPlan }) => {
+      const inputRef = useRef(null);
+      
+      useEffect(() => {
+        if (chatOpen && inputRef.current) {
+          setTimeout(() => inputRef.current?.focus(), 100);
+        }
+      }, [chatOpen]);
+
+      const clearChat = () => {
+        if (confirm('Deseja limpar todo o histórico do chat?')) {
+          setChatMessages([]);
+          localStorage.removeItem('fitlife_chat');
+        }
+      };
+      
+      return (
+        <div className={`fixed bottom-0 right-0 w-full md:w-96 transition-all duration-300 ${chatOpen ? 'h-[600px]' : 'h-0'} overflow-hidden z-50 rounded-t-2xl ${darkMode ? 'bg-gray-900 border-t-4 border-purple-500' : 'bg-white border-t-4 border-blue-600'} shadow-2xl`}>
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center animate-pulse-slow">
+                <Icons.Bot />
+              </div>
+              <div>
+                <h3 className="font-bold text-white">Coach IA Claude</h3>
+                <p className="text-xs text-white/80 flex items-center">
+                  <span className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
+                  {subscriptionPlan === 'free' ? 'Plano Grátis' : subscriptionPlan === 'premium' ? 'Plano Premium' : 'Plano Anual'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              {chatMessages.length > 0 && (
+                <button onClick={clearChat} className="text-white hover:bg-white/20 p-2 rounded-lg transition" title="Limpar chat">
+                  <div className="w-4 h-4"><Icons.Trash /></div>
+                </button>
+              )}
+              <button onClick={() => setChatOpen(false)} className="text-white hover:bg-white/20 p-2 rounded-lg transition">
+                <div className="w-5 h-5"><Icons.X /></div>
+              </button>
+            </div>
+          </div>
+          
+          <div className={`h-[calc(100%-140px)] overflow-y-auto p-4 space-y-4 chat-scroll ${darkMode ? 'bg-gradient-to-b from-gray-900 to-gray-800' : 'bg-gradient-to-b from-gray-50 to-white'}`}>
+            {chatMessages.length === 0 && (
+              <div className="text-center py-8">
+                <div className={`w-20 h-20 mx-auto mb-4 ${darkMode ? 'text-gray-600' : 'text-gray-300'}`}>
+                  <Icons.Sparkles />
+                </div>
+                <p className={`font-semibold text-lg mb-2 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Como posso te ajudar hoje?</p>
+                <p className={`text-sm mb-6 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Powered by Claude AI</p>
+                {subscriptionPlan === 'free' && (
+                  <div className={`mb-4 p-3 rounded-xl ${darkMode ? 'bg-orange-900/20 border border-orange-700' : 'bg-orange-50 border border-orange-200'}`}>
+                    <p className={`text-xs font-semibold ${darkMode ? 'text-orange-300' : 'text-orange-700'}`}>
+                      ⚡ Plano Grátis: 10 mensagens/dia
+                    </p>
+                  </div>
+                )}
+                <div className="space-y-2">
+                  {['Quero trocar meu café da manhã por tapioca', 'Ajustar treino de segunda para mais peito', 'Aumentar proteínas na dieta', 'Motivação para hoje!'].map(s => (
+                    <button key={s} onClick={() => { setChatInput(s); setTimeout(() => inputRef.current?.focus(), 100); }} className={`block w-full text-sm border-2 rounded-xl px-4 py-3 transition font-medium ${darkMode ? 'bg-gray-800 border-gray-700 hover:border-purple-500 hover:bg-gray-700' : 'bg-white border-gray-200 hover:border-blue-500 hover:bg-blue-50'}`}>
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {chatMessages.map((msg, i) => (
+              <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[85%] rounded-2xl px-4 py-3 ${msg.role === 'user' ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white' : darkMode ? 'bg-gray-800 border-2 border-gray-700 text-gray-200 shadow-sm' : 'bg-white border-2 border-gray-200 text-gray-800 shadow-sm'}`}>
+                  <p className="text-sm whitespace-pre-line leading-relaxed">{msg.content}</p>
+                </div>
+              </div>
+            ))}
+            
+            {isTyping && (
+              <div className="flex justify-start">
+                <div className={`rounded-2xl px-4 py-3 shadow-sm ${darkMode ? 'bg-gray-800 border-2 border-gray-700' : 'bg-white border-2 border-gray-200'}`}>
+                  <div className="flex space-x-2">
+                    <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{animationDelay:'0.2s'}}></div>
+                    <div className="w-2 h-2 bg-pink-600 rounded-full animate-bounce" style={{animationDelay:'0.4s'}}></div>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={chatEndRef} />
+          </div>
+          
+          <div className={`absolute bottom-0 left-0 right-0 p-4 border-t-2 ${darkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}>
+            <div className="flex space-x-2">
+              <input
+                ref={inputRef}
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey && !isTyping && chatInput.trim()) {
+                    e.preventDefault();
+                    sendChatMessage();
+                  }
+                }}
+                placeholder="Digite sua mensagem..."
+                className={`flex-1 px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition ${darkMode ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400' : 'border-gray-300 focus:border-blue-500'}`}
+                disabled={isTyping}
+                autoComplete="off"
+              />
+              <button onClick={sendChatMessage} disabled={!chatInput.trim() || isTyping} className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-3 rounded-xl hover:shadow-lg transition disabled:opacity-50">
+                <div className="w-5 h-5"><Icons.Send /></div>
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    });
+
+// Sistema de Notificações Inteligentes
+const NotificationSystem = {
+  mealReminders: [
+    { id: 'breakfast', time: '07:00', title: '🌅 Café da Manhã', message: 'Hora do café da manhã! Seu corpo precisa de energia.' },
+    { id: 'snack1', time: '10:00', title: '🍎 Lanche da Manhã', message: 'Lanche da manhã! Mantenha seu metabolismo ativo.' },
+    { id: 'lunch', time: '12:30', title: '🍽️ Almoço', message: 'Hora do almoço! Não pule esta refeição importante.' },
+    { id: 'snack2', time: '16:00', title: '🥤 Lanche da Tarde', message: 'Lanche da tarde! Evite chegar no jantar com fome.' },
+    { id: 'dinner', time: '19:30', title: '🌙 Jantar', message: 'Hora do jantar! Uma refeição equilibrada para fechar o dia.' }
+  ],
+  
+  waterReminders: [
+    { time: '09:00', message: '💧 Beba água! Hidratação é essencial.' },
+    { time: '11:00', message: '💧 Hora de se hidratar!' },
+    { time: '14:00', message: '💧 Não esqueça de beber água!' },
+    { time: '17:00', message: '💧 Mantenha-se hidratado!' },
+    { time: '20:00', message: '💧 Última água do dia!' }
+  ],
+  
+  workoutReminders: {
+    'Segunda-feira': { time: '18:00', message: '💪 Treino de Peito e Tríceps hoje!' },
+    'Terça-feira': { time: '18:00', message: '💪 Treino de Costas e Bíceps hoje!' },
+    'Quarta-feira': { time: '18:00', message: '💪 Dia de Pernas! Vamos lá!' },
+    'Quinta-feira': { time: '18:00', message: '💪 Treino de Ombros e Abdômen!' },
+    'Sexta-feira': { time: '18:00', message: '💪 Full Body! Feche a semana com tudo!' },
+    'Sábado': { time: '09:00', message: '🏃 Cardio e Core! Sábado ativo!' },
+    'Domingo': { time: '10:00', message: '🧘 Descanso Ativo! Alongue-se!' }
+  },
+  
+  motivationalMessages: [
+    { time: '06:00', message: '🌟 Bom dia! Hoje é o dia de ser melhor que ontem!' },
+    { time: '12:00', message: '⚡ Metade do dia! Continue firme nos seus objetivos!' },
+    { time: '21:00', message: '🌙 Boa noite! Amanhã é um novo dia de conquistas!' }
+  ],
+  
+  upgradeOffers: [
+    { 
+      condition: 'dailyLimit',
+      title: '⚡ Upgrade para Premium!',
+      message: 'Você atingiu o limite diário. Com o Premium, tenha 100 mensagens/dia!',
+      discount: '20% OFF hoje!'
+    },
+    {
+      condition: 'streak7',
+      title: '🔥 7 dias de sequência!',
+      message: 'Parabéns! Por estar comprometido, ganhe 30% OFF no plano Premium!',
+      discount: '30% OFF'
+    },
+    {
+      condition: 'weightGoal50',
+      title: '🎯 Metade do caminho!',
+      message: 'Você já alcançou 50% da meta! Premium te ajuda a chegar mais rápido!',
+      discount: '25% OFF'
+    }
+  ]
+};
+
+    const FitLifeApp = () => {
+      const [editingMeal, setEditingMeal] = useState(null);
+      const [editingWorkout, setEditingWorkout] = useState(null);
+      const [isLoggedIn, setIsLoggedIn] = useState(false);
+      const [currentView, setCurrentView] = useState('login');
+      const [userData, setUserData] = useState(null);
+      const [progressPhotos, setProgressPhotos] = useState([]);
+      const [weightHistory, setWeightHistory] = useState([]);
+      const [completedFoods, setCompletedFoods] = useState([]);
+      const [completedWorkouts, setCompletedWorkouts] = useState([]);
+      const [showNotification, setShowNotification] = useState(false);
+      const [notificationMessage, setNotificationMessage] = useState('');
+      const [chatOpen, setChatOpen] = useState(false);
+      const [chatMessages, setChatMessages] = useState([]);
+      const [chatInput, setChatInput] = useState('');
+      const [isTyping, setIsTyping] = useState(false);
+      const [darkMode, setDarkMode] = useState(false);
+      const [dailyStreak, setDailyStreak] = useState(0);
+      const [lastActivityDate, setLastActivityDate] = useState(null);
+      const [dailyMessageCount, setDailyMessageCount] = useState(0);
+      const [lastMessageDate, setLastMessageDate] = useState(null);
+      const [mealPlan, setMealPlan] = useState(null);
+      const [workoutPlan, setWorkoutPlan] = useState(null);
+      const [nutritionGoals, setNutritionGoals] = useState(null);
+      const [workoutCalories, setWorkoutCalories] = useState({});
+      const chatEndRef = useRef(null);
+      const [notifications, setNotifications] = useState([]);
+      const [showNotificationCenter, setShowNotificationCenter] = useState(false);
+      const [notificationSettings, setNotificationSettings] = useState({
+  meals: true,
+  water: true,
+  workouts: true,
+  motivation: true,
+  upgrades: true
+});
+     const [lastNotificationCheck, setLastNotificationCheck] = useState(null);
+    
+
+      const DEFAULT_NUTRITION_GOALS = {
+        dailyCalories: 2050,
+        protein: 150,
+        carbs: 220,
+        fats: 70
+      };
+
+      const DEFAULT_MEALS = [
+        { 
+          id: 'm1', 
+          time: '7:00', 
+          meal: 'Café da Manhã', 
+          foods: [
+            { id: 'f1', name: '2 ovos mexidos', calories: 140, protein: 12, carbs: 2, fats: 10 },
+            { id: 'f2', name: '40g de aveia com leite', calories: 180, protein: 8, carbs: 28, fats: 4 },
+            { id: 'f3', name: '1 banana média', calories: 105, protein: 1, carbs: 27, fats: 0 },
+            { id: 'f4', name: 'Café preto', calories: 5, protein: 0, carbs: 1, fats: 0 }
+          ]
+        },
+        { 
+          id: 'm2', 
+          time: '10:00', 
+          meal: 'Lanche da Manhã', 
+          foods: [
+            { id: 'f5', name: '1 iogurte grego (170g)', calories: 100, protein: 17, carbs: 6, fats: 0 },
+            { id: 'f6', name: '1 punhado de amêndoas (28g)', calories: 164, protein: 6, carbs: 6, fats: 14 }
+          ]
+        },
+        { 
+          id: 'm3', 
+          time: '12:30', 
+          meal: 'Almoço', 
+          foods: [
+            { id: 'f7', name: '150g de frango grelhado', calories: 248, protein: 47, carbs: 0, fats: 6 },
+            { id: 'f8', name: '4 colheres de arroz integral', calories: 216, protein: 5, carbs: 45, fats: 2 },
+            { id: 'f9', name: 'Salada verde à vontade', calories: 25, protein: 2, carbs: 5, fats: 0 },
+            { id: 'f10', name: 'Legumes assados', calories: 80, protein: 3, carbs: 12, fats: 2 }
+          ]
+        },
+        { 
+          id: 'm4', 
+          time: '16:00', 
+          meal: 'Lanche da Tarde', 
+          foods: [
+            { id: 'f11', name: 'Shake de proteína (whey)', calories: 120, protein: 24, carbs: 3, fats: 1 },
+            { id: 'f12', name: '1 maçã', calories: 95, protein: 0, carbs: 25, fats: 0 }
+          ]
+        },
+        { 
+          id: 'm5', 
+          time: '19:30', 
+          meal: 'Jantar', 
+          foods: [
+            { id: 'f13', name: '150g de salmão grelhado', calories: 280, protein: 39, carbs: 0, fats: 13 },
+            { id: 'f14', name: '200g de batata doce assada', calories: 180, protein: 4, carbs: 41, fats: 0 },
+            { id: 'f15', name: 'Brócolis no vapor', calories: 55, protein: 4, carbs: 11, fats: 1 }
+          ]
+        }
+      ];
+
+      const DEFAULT_WORKOUTS = [
+        { day: 'Segunda-feira', focus: 'Peito e Tríceps', exercises: ['Supino Reto - 4x10', 'Supino Inclinado - 3x12', 'Crossover - 3x15', 'Tríceps Testa - 3x12', 'Tríceps Corda - 3x15'], duration: '60 min', id: 'w1', intensity: 'Alta', muscleGroups: ['Peitoral', 'Tríceps'] },
+        { day: 'Terça-feira', focus: 'Costas e Bíceps', exercises: ['Barra Fixa - 4x8', 'Remada Curvada - 4x10', 'Pulldown - 3x12', 'Rosca Direta - 3x12', 'Rosca Martelo - 3x12'], duration: '60 min', id: 'w2', intensity: 'Alta', muscleGroups: ['Costas', 'Bíceps'] },
+        { day: 'Quarta-feira', focus: 'Pernas', exercises: ['Agachamento Livre - 4x12', 'Leg Press - 4x15', 'Cadeira Extensora - 3x15', 'Mesa Flexora - 3x15', 'Panturrilha - 4x20'], duration: '70 min', id: 'w3', intensity: 'Muito Alta', muscleGroups: ['Quadríceps', 'Posteriores', 'Panturrilha'] },
+        { day: 'Quinta-feira', focus: 'Ombros e Abdômen', exercises: ['Desenvolvimento - 4x10', 'Elevação Lateral - 3x15', 'Elevação Frontal - 3x12', 'Prancha - 3x60s', 'Abdominal Bicicleta - 3x20'], duration: '55 min', id: 'w4', intensity: 'Média', muscleGroups: ['Ombros', 'Abdômen'] },
+        { day: 'Sexta-feira', focus: 'Treino Full Body', exercises: ['Agachamento - 3x12', 'Supino - 3x10', 'Remada - 3x12', 'Desenvolvimento - 3x10', 'Rosca - 3x12'], duration: '65 min', id: 'w5', intensity: 'Alta', muscleGroups: ['Corpo Inteiro'] },
+        { day: 'Sábado', focus: 'Cardio e Core', exercises: ['Corrida 5km', 'Burpees - 3x15', 'Mountain Climbers - 3x20', 'Prancha Lateral - 3x45s', 'Russian Twist - 3x30'], duration: '45 min', id: 'w6', intensity: 'Cardio', muscleGroups: ['Cardio', 'Core'] },
+        { day: 'Domingo', focus: 'Descanso Ativo', exercises: ['Caminhada leve - 30min', 'Alongamento completo', 'Yoga ou Meditação'], duration: '30 min', id: 'w7', intensity: 'Baixa', muscleGroups: ['Recuperação'] }
+      ];
+
+      const MEAL_DATA = mealPlan || DEFAULT_MEALS;
+      const WORKOUT_DATA = workoutPlan || DEFAULT_WORKOUTS;
+      const NUTRITION_GOALS = nutritionGoals || DEFAULT_NUTRITION_GOALS;
+
+      const subscriptionPlan = userData?.subscription || 'free';
+      const MESSAGE_LIMITS = {
+        free: 10,
+        premium: 100,
+        annual: 999999
+      };
+
+      const calculateMealTotals = (meal) => {
+        return meal.foods.reduce((acc, food) => ({
+          calories: acc.calories + food.calories,
+          protein: acc.protein + food.protein,
+          carbs: acc.carbs + food.carbs,
+          fats: acc.fats + food.fats
+        }), { calories: 0, protein: 0, carbs: 0, fats: 0 });
+      };
+
+      useEffect(() => {
+        const loadData = () => {
+          try {
+            const saved = localStorage.getItem('fitlife_user');
+            const savedPhotos = localStorage.getItem('fitlife_photos');
+            const savedWeight = localStorage.getItem('fitlife_weight_history');
+            const savedFoods = localStorage.getItem('fitlife_foods');
+            const savedWorkouts = localStorage.getItem('fitlife_workouts');
+            const savedDarkMode = localStorage.getItem('fitlife_darkmode');
+            const savedStreak = localStorage.getItem('fitlife_streak');
+            const savedLastActivity = localStorage.getItem('fitlife_last_activity');
+            const savedChat = localStorage.getItem('fitlife_chat');
+            const savedMessageCount = localStorage.getItem('fitlife_message_count');
+            const savedMessageDate = localStorage.getItem('fitlife_message_date');
+            const savedMealPlan = localStorage.getItem('fitlife_meal_plan');
+            const savedWorkoutPlan = localStorage.getItem('fitlife_workout_plan');
+            const savedNutritionGoals = localStorage.getItem('fitlife_nutrition_goals');
+            const savedWorkoutCalories = localStorage.getItem('fitlife_workout_calories');
+            const savedNotifications = localStorage.getItem('fitlife_notifications');
+            const savedNotificationSettings = localStorage.getItem('fitlife_notification_settings');
+            const savedLastCheck = localStorage.getItem('fitlife_last_notification_check'); 
+
+            if (saved) {
+              setUserData(JSON.parse(saved));
+              setIsLoggedIn(true);
+              setCurrentView('dashboard');
+            }
+            if (savedPhotos) setProgressPhotos(JSON.parse(savedPhotos));
+            if (savedWeight) setWeightHistory(JSON.parse(savedWeight));
+            if (savedFoods) setCompletedFoods(JSON.parse(savedFoods));
+            if (savedWorkouts) setCompletedWorkouts(JSON.parse(savedWorkouts));
+            if (savedDarkMode) {
+              const isDark = JSON.parse(savedDarkMode);
+              setDarkMode(isDark);
+              if (isDark) document.documentElement.classList.add('dark');
+            }
+            if (savedStreak) setDailyStreak(parseInt(savedStreak));
+            if (savedLastActivity) setLastActivityDate(savedLastActivity);
+            if (savedChat) setChatMessages(JSON.parse(savedChat));
+            if (savedMessageCount) setDailyMessageCount(parseInt(savedMessageCount));
+            if (savedMessageDate) setLastMessageDate(savedMessageDate);
+            if (savedMealPlan) setMealPlan(JSON.parse(savedMealPlan));
+            if (savedWorkoutPlan) setWorkoutPlan(JSON.parse(savedWorkoutPlan));
+            if (savedNutritionGoals) setNutritionGoals(JSON.parse(savedNutritionGoals));
+            if (savedWorkoutCalories) setWorkoutCalories(JSON.parse(savedWorkoutCalories));
+            if (savedNotifications) setNotifications(JSON.parse(savedNotifications));
+            if (savedNotificationSettings) setNotificationSettings(JSON.parse(savedNotificationSettings));
+            if (savedLastCheck) setLastNotificationCheck(savedLastCheck);
+          } catch (e) {
+            console.error('Erro ao carregar dados:', e);
+          }
+        };
+        loadData();
+      }, []);
+
+      useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, [chatMessages]);
+
+      useEffect(() => {
+        if (darkMode) {
+          document.documentElement.classList.add('dark');
+          localStorage.setItem('fitlife_darkmode', JSON.stringify(true));
+        } else {
+          document.documentElement.classList.remove('dark');
+          localStorage.setItem('fitlife_darkmode', JSON.stringify(false));
+        }
+      }, [darkMode]);
+
+      useEffect(() => {
+        localStorage.setItem('fitlife_chat', JSON.stringify(chatMessages));
+      }, [chatMessages]);
+
+      // Sistema de Notificações Automáticas
+useEffect(() => {
+  if (!isLoggedIn) return;
+
+  const checkNotifications = () => {
+    const now = new Date();
+    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const currentDay = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'][now.getDay()];
+    const lastCheck = lastNotificationCheck || '';
+
+    // Evitar notificações duplicadas no mesmo minuto
+    if (lastCheck === currentTime) return;
+    setLastNotificationCheck(currentTime);
+    localStorage.setItem('fitlife_last_notification_check', currentTime);
+
+    const newNotifications = [];
+
+    // 1. NOTIFICAÇÕES DE REFEIÇÕES
+    if (notificationSettings.meals) {
+      NotificationSystem.mealReminders.forEach(meal => {
+        if (meal.time === currentTime) {
+          const mealData = MEAL_DATA.find(m => m.time === meal.time);
+          if (mealData) {
+            const completedInMeal = mealData.foods.filter(f => completedFoods.includes(f.id)).length;
+            const allCompleted = completedInMeal === mealData.foods.length;
+            
+            if (!allCompleted) {
+              newNotifications.push({
+                id: `meal-${Date.now()}`,
+                type: 'meal',
+                icon: '🍽️',
+                title: meal.title,
+                message: meal.message,
+                time: currentTime,
+                action: () => setCurrentView('nutrition')
+              });
+            }
+          }
+        }
+      });
+    }
+
+    // 2. NOTIFICAÇÕES DE ÁGUA
+    if (notificationSettings.water) {
+      NotificationSystem.waterReminders.forEach(water => {
+        if (water.time === currentTime) {
+          newNotifications.push({
+            id: `water-${Date.now()}`,
+            type: 'water',
+            icon: '💧',
+            title: 'Hidratação',
+            message: water.message,
+            time: currentTime
+          });
+        }
+      });
+    }
+
+    // 3. NOTIFICAÇÕES DE TREINO
+    if (notificationSettings.workouts) {
+      const todayWorkout = NotificationSystem.workoutReminders[currentDay];
+      if (todayWorkout && todayWorkout.time === currentTime) {
+        const workout = WORKOUT_DATA.find(w => w.day === currentDay);
+        if (workout && !completedWorkouts.includes(workout.id)) {
+          newNotifications.push({
+            id: `workout-${Date.now()}`,
+            type: 'workout',
+            icon: '💪',
+            title: 'Hora do Treino!',
+            message: todayWorkout.message,
+            time: currentTime,
+            action: () => setCurrentView('workout')
+          });
+        }
+      }
+    }
+
+    // 4. MENSAGENS MOTIVACIONAIS
+    if (notificationSettings.motivation) {
+      NotificationSystem.motivationalMessages.forEach(msg => {
+        if (msg.time === currentTime) {
+          newNotifications.push({
+            id: `motivation-${Date.now()}`,
+            type: 'motivation',
+            icon: '⭐',
+            title: 'Mensagem Motivacional',
+            message: msg.message,
+            time: currentTime
+          });
+        }
+      });
+    }
+
+    // 5. OFERTAS DE UPGRADE (verificações especiais)
+    if (notificationSettings.upgrades && subscriptionPlan === 'free') {
+      // Limite diário atingido
+      if (dailyMessageCount >= MESSAGE_LIMITS.free) {
+        const hasUpgradeNotif = notifications.some(n => n.type === 'upgrade' && n.condition === 'dailyLimit');
+        if (!hasUpgradeNotif) {
+          const offer = NotificationSystem.upgradeOffers.find(o => o.condition === 'dailyLimit');
+          newNotifications.push({
+            id: `upgrade-daily-${Date.now()}`,
+            type: 'upgrade',
+            icon: '⚡',
+            title: offer.title,
+            message: offer.message,
+            discount: offer.discount,
+            time: currentTime,
+            condition: 'dailyLimit',
+            action: () => setCurrentView('profile')
+          });
+        }
+      }
+
+      // Sequência de 7 dias
+      if (dailyStreak >= 7 && dailyStreak % 7 === 0) {
+        const hasStreakNotif = notifications.some(n => n.type === 'upgrade' && n.condition === 'streak7');
+        if (!hasStreakNotif) {
+          const offer = NotificationSystem.upgradeOffers.find(o => o.condition === 'streak7');
+          newNotifications.push({
+            id: `upgrade-streak-${Date.now()}`,
+            type: 'upgrade',
+            icon: '🔥',
+            title: offer.title,
+            message: offer.message,
+            discount: offer.discount,
+            time: currentTime,
+            condition: 'streak7',
+            action: () => setCurrentView('profile')
+          });
+        }
+      }
+
+      // 50% do objetivo alcançado
+      if (userData?.startWeight && userData?.goalWeight) {
+        const currentWeight = parseFloat(userData.currentWeight);
+        const startWeight = parseFloat(userData.startWeight);
+        const goalWeight = parseFloat(userData.goalWeight);
+        const totalGoal = startWeight - goalWeight;
+        const progress = ((startWeight - currentWeight) / totalGoal) * 100;
+        
+        if (progress >= 50 && progress < 55) {
+          const hasGoalNotif = notifications.some(n => n.type === 'upgrade' && n.condition === 'weightGoal50');
+          if (!hasGoalNotif) {
+            const offer = NotificationSystem.upgradeOffers.find(o => o.condition === 'weightGoal50');
+            newNotifications.push({
+              id: `upgrade-goal-${Date.now()}`,
+              type: 'upgrade',
+              icon: '🎯',
+              title: offer.title,
+              message: offer.message,
+              discount: offer.discount,
+              time: currentTime,
+              condition: 'weightGoal50',
+              action: () => setCurrentView('profile')
+            });
+          }
+        }
+      }
+    }
+
+    // Adicionar novas notificações
+    if (newNotifications.length > 0) {
+      setNotifications(prev => {
+        const updated = [...newNotifications, ...prev].slice(0, 50); // Limite de 50 notificações
+        localStorage.setItem('fitlife_notifications', JSON.stringify(updated));
+        return updated;
+      });
+
+      // Mostrar notificação visual
+      newNotifications.forEach((notif, index) => {
+        setTimeout(() => {
+          showNotif(`${notif.icon} ${notif.title}: ${notif.message}`);
+        }, index * 2000);
+      });
+    }
+  };
+
+  // Verificar a cada minuto
+  const interval = setInterval(checkNotifications, 60000);
+  checkNotifications(); // Verificar imediatamente
+
+  return () => clearInterval(interval);
+}, [isLoggedIn, notificationSettings, completedFoods, completedWorkouts, dailyMessageCount, dailyStreak, subscriptionPlan, userData, lastNotificationCheck]);
+
+      useEffect(() => {
+        const today = new Date().toDateString();
+        if (lastMessageDate !== today) {
+          setDailyMessageCount(0);
+          setLastMessageDate(today);
+          localStorage.setItem('fitlife_message_count', '0');
+          localStorage.setItem('fitlife_message_date', today);
+        }
+      }, []);
+
+      const updateStreak = () => {
+        const today = new Date().toDateString();
+        const yesterday = new Date(Date.now() - 86400000).toDateString();
+        
+        if (lastActivityDate === today) {
+          return;
+        } else if (lastActivityDate === yesterday) {
+          const newStreak = dailyStreak + 1;
+          setDailyStreak(newStreak);
+          localStorage.setItem('fitlife_streak', newStreak.toString());
+        } else if (lastActivityDate !== null) {
+          setDailyStreak(1);
+          localStorage.setItem('fitlife_streak', '1');
+        } else {
+          setDailyStreak(1);
+          localStorage.setItem('fitlife_streak', '1');
+        }
+        
+        setLastActivityDate(today);
+        localStorage.setItem('fitlife_last_activity', today);
+      };
+
+      const showNotif = (message) => {
+        setNotificationMessage(message);
+        setShowNotification(true);
+        setTimeout(() => setShowNotification(false), 3000);
+      };
+
+      const parseAIResponse = (response) => {
+        try {
+          const jsonMatch = response.match(/```json\n([\s\S]*?)\n```/) || response.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const jsonStr = jsonMatch[1] || jsonMatch[0];
+            const parsed = JSON.parse(jsonStr);
+            console.log('✅ JSON parseado com sucesso:', parsed);
+            return parsed;
+          }
+          console.log('⚠️ Nenhum JSON encontrado na resposta');
+        } catch (e) {
+          console.error('❌ Erro ao parsear resposta:', e);
+        }
+        return null;
+      };
+
+const calculateWorkoutCalories = async (workout) => {
+  if (workoutCalories[workout.id]) {
+    // Já calculou antes
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [
+          {
+            role: 'user',
+            content: `Calcule as calorias queimadas para uma pessoa de ${userData?.currentWeight || 70}kg fazendo este treino:
+
+Treino: ${workout.focus}
+Duração: ${workout.duration}
+Intensidade: ${workout.intensity}
+Exercícios: ${workout.exercises.join(', ')}
+
+Retorne APENAS um JSON:
+{"calories": 450, "explanation": "Treino de alta intensidade, 60min"}
+
+Não adicione texto além do JSON.`
+          }
+        ]
+      })
+    });
+
+    const data = await response.json();
+    let aiResponse = data.content[0].text;
+    
+    // Limpar e extrair JSON
+    aiResponse = aiResponse.replace(/```json/g, '').replace(/```/g, '').trim();
+    
+    let jsonData = null;
+    try {
+      jsonData = JSON.parse(aiResponse);
+    } catch (e) {
+      const match = aiResponse.match(/\{[\s\S]*\}/);
+      if (match) jsonData = JSON.parse(match[0]);
+    }
+    
+    if (jsonData && jsonData.calories) {
+      setWorkoutCalories(prev => ({
+        ...prev,
+        [workout.id]: jsonData.calories
+      }));
+      localStorage.setItem('fitlife_workout_calories', JSON.stringify({
+        ...workoutCalories,
+        [workout.id]: jsonData.calories
+      }));
+    }
+  } catch (error) {
+    console.error('Erro ao calcular calorias do treino:', error);
+  }
+};
+
+const sendChatMessage = async () => {
+  if (!chatInput.trim()) return;
+
+  if (subscriptionPlan === 'free' && dailyMessageCount >= MESSAGE_LIMITS.free) {
+    showNotif('⚠️ Limite de mensagens diárias atingido! Faça upgrade para Premium.');
+    return;
+  }
+  
+  const userMessage = { role: 'user', content: chatInput };
+  const currentInput = chatInput;
+  setChatMessages(prev => [...prev, userMessage]);
+  setChatInput('');
+  setIsTyping(true);
+
+  setDailyMessageCount(prev => prev + 1);
+  localStorage.setItem('fitlife_message_count', (dailyMessageCount + 1).toString());
+
+  try {
+    const isNutritionRequest = currentInput.toLowerCase().includes('dieta') || 
+                                currentInput.toLowerCase().includes('refeição') || 
+                                currentInput.toLowerCase().includes('alimentação') ||
+                                currentInput.toLowerCase().includes('comida') ||
+                                currentInput.toLowerCase().includes('café') ||
+                                currentInput.toLowerCase().includes('almoço') ||
+                                currentInput.toLowerCase().includes('jantar') ||
+                                currentInput.toLowerCase().includes('lanche') ||
+                                currentInput.toLowerCase().includes('trocar') ||
+                                currentInput.toLowerCase().includes('mudar') ||
+                                currentInput.toLowerCase().includes('alterar');
+    
+    const isWorkoutRequest = currentInput.toLowerCase().includes('treino') || 
+                             currentInput.toLowerCase().includes('exercício') ||
+                             currentInput.toLowerCase().includes('musculação') ||
+                             currentInput.toLowerCase().includes('academia') ||
+                             currentInput.toLowerCase().includes('segunda') ||
+                             currentInput.toLowerCase().includes('terça') ||
+                             currentInput.toLowerCase().includes('quarta') ||
+                             currentInput.toLowerCase().includes('quinta') ||
+                             currentInput.toLowerCase().includes('sexta') ||
+                             currentInput.toLowerCase().includes('sábado') ||
+                             currentInput.toLowerCase().includes('domingo');
+
+    let systemPrompt = `Você é um coach fitness motivacional. Seja breve e amigável.
+
+DADOS DO USUÁRIO:
+- Nome: ${userData?.name}
+- Peso atual: ${userData?.currentWeight}kg
+- Meta: ${userData?.goalWeight}kg`;
+
+    if (isNutritionRequest) {
+      systemPrompt = `Você é um assistente que retorna APENAS JSON válido, sem explicações.
+
+PLANO ATUAL:
+${JSON.stringify(MEAL_DATA, null, 2)}
+
+PEDIDO DO USUÁRIO: "${currentInput}"
+
+Retorne APENAS este formato JSON (sem texto antes ou depois):
+
+{
+  "meals": [
+    {"id": "m1", "time": "7:00", "meal": "Café da Manhã", "foods": [{"id": "f1", "name": "NOVO ALIMENTO", "calories": 200, "protein": 10, "carbs": 25, "fats": 5}]},
+    {"id": "m2", "time": "10:00", "meal": "Lanche da Manhã", "foods": [{"id": "f5", "name": "1 iogurte grego", "calories": 100, "protein": 17, "carbs": 6, "fats": 0}]},
+    {"id": "m3", "time": "12:30", "meal": "Almoço", "foods": [{"id": "f7", "name": "150g frango", "calories": 248, "protein": 47, "carbs": 0, "fats": 6}]},
+    {"id": "m4", "time": "16:00", "meal": "Lanche da Tarde", "foods": [{"id": "f11", "name": "Whey", "calories": 120, "protein": 24, "carbs": 3, "fats": 1}]},
+    {"id": "m5", "time": "19:30", "meal": "Jantar", "foods": [{"id": "f13", "name": "150g salmão", "calories": 280, "protein": 39, "carbs": 0, "fats": 13}]}
+  ],
+  "nutritionGoals": {"dailyCalories": 2050, "protein": 150, "carbs": 220, "fats": 70},
+  "explanation": "Alterei conforme pedido"
+}
+
+IMPORTANTE: Altere APENAS a refeição solicitada. Mantenha todas as outras iguais ao plano atual.`;
+    }
+
+    if (isWorkoutRequest) {
+      systemPrompt = `Você é um assistente que retorna APENAS JSON válido, sem explicações.
+
+PLANO ATUAL:
+${JSON.stringify(WORKOUT_DATA, null, 2)}
+
+PEDIDO: "${currentInput}"
+
+Retorne APENAS este JSON:
+
+{
+  "workouts": [
+    {"id": "w1", "day": "Segunda-feira", "focus": "Peito e Tríceps", "exercises": ["Supino Reto - 4x10"], "duration": "60 min", "intensity": "Alta", "muscleGroups": ["Peitoral"]},
+    {"id": "w2", "day": "Terça-feira", "focus": "Costas", "exercises": ["Barra - 4x8"], "duration": "60 min", "intensity": "Alta", "muscleGroups": ["Costas"]},
+    {"id": "w3", "day": "Quarta-feira", "focus": "Pernas", "exercises": ["Agachamento - 5x12"], "duration": "70 min", "intensity": "Muito Alta", "muscleGroups": ["Quadríceps"]},
+    {"id": "w4", "day": "Quinta-feira", "focus": "Ombros", "exercises": ["Desenvolvimento - 4x10"], "duration": "55 min", "intensity": "Média", "muscleGroups": ["Ombros"]},
+    {"id": "w5", "day": "Sexta-feira", "focus": "Full Body", "exercises": ["Agachamento - 3x12"], "duration": "65 min", "intensity": "Alta", "muscleGroups": ["Corpo"]},
+    {"id": "w6", "day": "Sábado", "focus": "Cardio", "exercises": ["Corrida 5km"], "duration": "45 min", "intensity": "Cardio", "muscleGroups": ["Cardio"]},
+    {"id": "w7", "day": "Domingo", "focus": "Descanso", "exercises": ["Alongamento"], "duration": "30 min", "intensity": "Baixa", "muscleGroups": ["Recuperação"]}
+  ],
+  "explanation": "Ajustado conforme pedido"
+}
+
+IMPORTANTE: Altere APENAS o dia solicitado. Mantenha os outros 6 dias iguais ao plano atual.`;
+    }
+
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: currentInput }
+        ]
+      })
+    });
+
+    if (!response.ok) throw new Error(`Erro: ${response.status}`);
+
+    const data = await response.json();
+    const aiResponse = data.content[0].text;
+    
+    console.log('🤖 Resposta completa:', aiResponse);
+    
+    if (isNutritionRequest) {
+      const parsed = parseAIResponse(aiResponse);
+      if (parsed && parsed.meals) {
+        console.log('✅ Atualizando plano alimentar');
+        setMealPlan(parsed.meals);
+        localStorage.setItem('fitlife_meal_plan', JSON.stringify(parsed.meals));
+        
+        if (parsed.nutritionGoals) {
+          setNutritionGoals(parsed.nutritionGoals);
+          localStorage.setItem('fitlife_nutrition_goals', JSON.stringify(parsed.nutritionGoals));
+        }
+        
+        showNotif('✅ Plano alimentar atualizado!');
+        
+        const explanation = parsed.explanation || 'Plano atualizado!';
+        setChatMessages(prev => [...prev, { 
+          role: 'assistant', 
+          content: `✅ ${explanation}\n\nVeja na aba "Nutrição"! 🍽️`
+        }]);
+      } else {
+        console.log('⚠️ JSON inválido. Resposta:', aiResponse.substring(0, 200));
+        setChatMessages(prev => [...prev, { 
+          role: 'assistant', 
+          content: '⚠️ Tente de forma mais específica. Ex: "Trocar café da manhã por 2 ovos mexidos e 1 pão integral"'
+        }]);
+      }
+    } else if (isWorkoutRequest) {
+      const parsed = parseAIResponse(aiResponse);
+      if (parsed && parsed.workouts) {
+        console.log('✅ Atualizando treino');
+        setWorkoutPlan(parsed.workouts);
+        localStorage.setItem('fitlife_workout_plan', JSON.stringify(parsed.workouts));
+        showNotif('✅ Treino atualizado!');
+        
+        const explanation = parsed.explanation || 'Treino atualizado!';
+        setChatMessages(prev => [...prev, { 
+          role: 'assistant', 
+          content: `✅ ${explanation}\n\nVeja na aba "Treinos"! 💪`
+        }]);
+      } else {
+        console.log('⚠️ JSON inválido. Resposta:', aiResponse.substring(0, 200));
+        setChatMessages(prev => [...prev, { 
+          role: 'assistant', 
+          content: '⚠️ Seja mais específico. Ex: "Adicionar supino inclinado 4x12 na segunda-feira"'
+        }]);
+      }
+    } else {
+      setChatMessages(prev => [...prev, { role: 'assistant', content: aiResponse }]);
+    }
+  } catch (error) {
+    console.error('❌ Erro:', error);
+    setChatMessages(prev => [...prev, { 
+      role: 'assistant', 
+      content: '⚠️ Erro ao conectar. Verifique se o servidor está rodando na porta 3000.'
+    }]);
+  } finally {
+    setIsTyping(false);
+  }
+};
+
+      const editMeal = (meal) => {
+  setEditingMeal(meal);
+};
+
+const saveMeal = (updatedMeal) => {
+  const updatedPlan = MEAL_DATA.map(m => m.id === updatedMeal.id ? updatedMeal : m);
+  setMealPlan(updatedPlan);
+  localStorage.setItem('fitlife_meal_plan', JSON.stringify(updatedPlan));
+  setEditingMeal(null);
+  showNotif('✅ Refeição atualizada com sucesso!');
+};
+
+      const editWorkout = (workout) => {
+  setEditingWorkout(workout);
+};
+
+const saveWorkout = (updatedWorkout) => {
+  const updatedPlan = WORKOUT_DATA.map(w => w.id === updatedWorkout.id ? updatedWorkout : w);
+  setWorkoutPlan(updatedPlan);
+  localStorage.setItem('fitlife_workout_plan', JSON.stringify(updatedPlan));
+  setEditingWorkout(null);
+  showNotif('✅ Treino atualizado com sucesso!');
+};
+
+      const resetMealPlan = () => {
+        if (confirm('Deseja restaurar o plano alimentar padrão?')) {
+          setMealPlan(null);
+          setNutritionGoals(null);
+          localStorage.removeItem('fitlife_meal_plan');
+          localStorage.removeItem('fitlife_nutrition_goals');
+          showNotif('🔄 Plano alimentar restaurado!');
+        }
+      };
+
+      const resetWorkoutPlan = () => {
+        if (confirm('Deseja restaurar o plano de treino padrão?')) {
+          setWorkoutPlan(null);
+          localStorage.removeItem('fitlife_workout_plan');
+          showNotif('🔄 Plano de treino restaurado!');
+        }
+      };
+
+      const addWeightEntry = () => {
+        const weight = prompt('Digite seu peso atual (kg):');
+        if (weight && !isNaN(parseFloat(weight))) {
+          const newEntry = { date: new Date().toISOString(), weight: parseFloat(weight) };
+          const updated = [...weightHistory, newEntry];
+          setWeightHistory(updated);
+          localStorage.setItem('fitlife_weight_history', JSON.stringify(updated));
+          
+          const updatedUser = { ...userData, currentWeight: weight };
+          setUserData(updatedUser);
+          localStorage.setItem('fitlife_user', JSON.stringify(updatedUser));
+          
+          updateStreak();
+          showNotif('⚖️ Peso atualizado com sucesso!');
+        }
+      };
+
+      const toggleFoodComplete = (foodId) => {
+        const updated = completedFoods.includes(foodId)
+          ? completedFoods.filter(id => id !== foodId)
+          : [...completedFoods, foodId];
+        setCompletedFoods(updated);
+        localStorage.setItem('fitlife_foods', JSON.stringify(updated));
+        updateStreak();
+      };
+
+      const toggleWorkoutComplete = async (workoutId) => {
+  const updated = completedWorkouts.includes(workoutId)
+    ? completedWorkouts.filter(id => id !== workoutId)
+    : [...completedWorkouts, workoutId];
+  setCompletedWorkouts(updated);
+  localStorage.setItem('fitlife_workouts', JSON.stringify(updated));
+  updateStreak();
+  
+  // Se marcou como completo, calcular calorias
+  if (!completedWorkouts.includes(workoutId)) {
+    const workout = WORKOUT_DATA.find(w => w.id === workoutId);
+    if (workout) {
+      await calculateWorkoutCalories(workout);
+      showNotif('🔥 Treino concluído! Calculando calorias queimadas...');
+    }
+  } else {
+    showNotif('✅ Treino desmarcado');
+  }
+};
+
+const ManualMealEditor = ({ meal, onSave, onCancel, darkMode }) => {
+  const [editedMeal, setEditedMeal] = useState(JSON.parse(JSON.stringify(meal)));
+  const [loadingNutrition, setLoadingNutrition] = useState({});
+  const [fetchStatus, setFetchStatus] = useState({});
+  
+  const addFood = () => {
+    const newFood = {
+      id: `f${Date.now()}`,
+      name: '',
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fats: 0
+    };
+    setEditedMeal({
+      ...editedMeal,
+      foods: [...editedMeal.foods, newFood]
+    });
+  };
+  
+  const fetchNutritionData = async (foodName, index) => {
+  if (!foodName || foodName.length < 3) return;
+  
+  setLoadingNutrition(prev => ({ ...prev, [index]: true }));
+  setFetchStatus(prev => ({ ...prev, [index]: 'searching' }));
+  
+  console.log('🔍 Iniciando busca para:', foodName);
+  
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [
+          {
+            role: 'user',
+            content: `Retorne APENAS um objeto JSON com os valores nutricionais de "${foodName}". 
+
+Não escreva nada além do JSON. Nem antes, nem depois. Apenas o JSON puro.
+
+Formato exato:
+{"calories": 156, "protein": 13, "carbs": 1, "fats": 11, "portion": "2 ovos (100g)"}
+
+Exemplos:
+"2 ovos cozidos" → {"calories": 156, "protein": 13, "carbs": 1, "fats": 11, "portion": "2 ovos (100g)"}
+"3 ovos mexidos" → {"calories": 234, "protein": 19, "carbs": 2, "fats": 16, "portion": "3 ovos (150g)"}
+
+Agora retorne o JSON para: ${foodName}`
+          }
+        ]
+      })
+    });
+
+    console.log('📡 Status da resposta:', response.status);
+
+    if (!response.ok) {
+      throw new Error(`Erro HTTP: ${response.status}`);
+    }
+
+    const data = await response.json();
+    let aiResponse = data.content[0].text;
+    
+    console.log('🤖 Resposta COMPLETA da IA:', aiResponse);
+    console.log('🤖 Tipo da resposta:', typeof aiResponse);
+    console.log('🤖 Tamanho da resposta:', aiResponse.length);
+    
+    // Remover markdown
+    aiResponse = aiResponse.replace(/```json/g, '').replace(/```/g, '').trim();
+    
+    console.log('🧹 Depois de limpar markdown:', aiResponse);
+    
+    // Tentar extrair JSON de várias formas
+    let jsonData = null;
+    
+    // Método 1: Tentar parsear direto
+    try {
+      jsonData = JSON.parse(aiResponse);
+      console.log('✅ Método 1 funcionou (parse direto)');
+    } catch (e) {
+      console.log('⚠️ Método 1 falhou, tentando método 2...');
+      
+      // Método 2: Procurar por { ... }
+      const match = aiResponse.match(/\{[^{}]*\}/);
+      if (match) {
+        try {
+          jsonData = JSON.parse(match[0]);
+          console.log('✅ Método 2 funcionou (regex simples)');
+        } catch (e2) {
+          console.log('⚠️ Método 2 falhou, tentando método 3...');
+          
+          // Método 3: Regex mais agressiva
+          const match2 = aiResponse.match(/\{[\s\S]*\}/);
+          if (match2) {
+            try {
+              jsonData = JSON.parse(match2[0]);
+              console.log('✅ Método 3 funcionou (regex agressiva)');
+            } catch (e3) {
+              console.log('⚠️ Método 3 falhou');
+            }
+          }
+        }
+      }
+    }
+    
+    if (!jsonData) {
+      console.error('❌ FALHA: Não foi possível extrair JSON');
+      console.error('❌ Resposta original:', aiResponse);
+      throw new Error('Não foi possível extrair JSON da resposta');
+    }
+    
+    console.log('✅ JSON parseado com sucesso:', jsonData);
+    
+    // Atualizar
+    const updated = [...editedMeal.foods];
+    updated[index] = {
+      ...updated[index],
+      calories: Math.round(jsonData.calories || 0),
+      protein: Math.round(jsonData.protein || 0),
+      carbs: Math.round(jsonData.carbs || 0),
+      fats: Math.round(jsonData.fats || 0)
+    };
+    setEditedMeal({ ...editedMeal, foods: updated });
+    
+    console.log('💾 Valores atualizados no campo:', updated[index]);
+    
+    setFetchStatus(prev => ({ 
+      ...prev, 
+      [index]: `success: ${jsonData.portion || 'Atualizado!'}` 
+    }));
+    
+    setTimeout(() => {
+      setFetchStatus(prev => {
+        const newStatus = { ...prev };
+        delete newStatus[index];
+        return newStatus;
+      });
+    }, 3000);
+    
+  } catch (error) {
+    console.error('❌ ERRO COMPLETO:', error);
+    
+    setFetchStatus(prev => ({ 
+      ...prev, 
+      [index]: `error: ${error.message}` 
+    }));
+    
+    setTimeout(() => {
+      setFetchStatus(prev => {
+        const newStatus = { ...prev };
+        delete newStatus[index];
+        return newStatus;
+      });
+    }, 5000);
+  } finally {
+    setLoadingNutrition(prev => ({ ...prev, [index]: false }));
+  }
+};
+  
+  const updateFood = (index, field, value) => {
+    const updated = [...editedMeal.foods];
+    updated[index] = { ...updated[index], [field]: field === 'name' ? value : parseFloat(value) || 0 };
+    setEditedMeal({ ...editedMeal, foods: updated });
+    
+    // Se mudou o nome e tem mais de 3 caracteres, buscar dados
+    if (field === 'name' && value.length >= 3) {
+      // Debounce: esperar 1.5 segundos após parar de digitar
+      if (updated[index].typingTimer) {
+        clearTimeout(updated[index].typingTimer);
+      }
+      updated[index].typingTimer = setTimeout(() => {
+        fetchNutritionData(value, index);
+      }, 1500);
+    }
+  };
+  
+  const removeFood = (index) => {
+    setEditedMeal({
+      ...editedMeal,
+      foods: editedMeal.foods.filter((_, i) => i !== index)
+    });
+  };
+  
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div className={`rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+        <h3 className={`text-2xl font-bold mb-6 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+          Editar {meal.meal}
+        </h3>
+        
+        <div className={`mb-4 p-3 rounded-xl border ${darkMode ? 'bg-blue-900/20 border-blue-700' : 'bg-blue-50 border-blue-200'}`}>
+          <p className={`text-xs ${darkMode ? 'text-blue-300' : 'text-blue-800'}`}>
+            💡 <strong>Dica:</strong> Digite o nome completo do alimento com quantidade (ex: "2 ovos cozidos", "100g frango grelhado") e aguarde 1.5s
+          </p>
+        </div>
+        
+        <div className="space-y-4 mb-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Horário</label>
+              <input
+                type="time"
+                value={editedMeal.time}
+                onChange={(e) => setEditedMeal({ ...editedMeal, time: e.target.value })}
+                className={`w-full px-4 py-2 border-2 rounded-xl ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+              />
+            </div>
+            <div>
+              <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Nome da Refeição</label>
+              <input
+                type="text"
+                value={editedMeal.meal}
+                onChange={(e) => setEditedMeal({ ...editedMeal, meal: e.target.value })}
+                className={`w-full px-4 py-2 border-2 rounded-xl ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+              />
+            </div>
+          </div>
+        </div>
+        
+        <div className="space-y-3 mb-6">
+          <div className="flex items-center justify-between">
+            <h4 className={`font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Alimentos</h4>
+            <button
+              onClick={addFood}
+              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition font-semibold"
+            >
+              <div className="w-4 h-4"><Icons.Plus /></div>
+              <span>Adicionar</span>
+            </button>
+          </div>
+          
+          {editedMeal.foods.map((food, index) => (
+            <div key={food.id} className={`border-2 rounded-xl p-4 ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    placeholder="Ex: 2 ovos cozidos, 100g frango grelhado, 1 banana..."
+                    value={food.name}
+                    onChange={(e) => updateFood(index, 'name', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+                  />
+                  
+                  {/* Status de busca */}
+                  {loadingNutrition[index] && (
+                    <div className="flex items-center space-x-2 text-blue-600">
+                      <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                      <span className="text-xs font-semibold">🔍 Buscando valores nutricionais...</span>
+                    </div>
+                  )}
+                  
+                  {fetchStatus[index] && !loadingNutrition[index] && (
+                    <div className={`flex items-center space-x-2 p-2 rounded-lg ${
+                      fetchStatus[index].startsWith('success') 
+                        ? darkMode ? 'bg-green-900/30 text-green-300' : 'bg-green-100 text-green-700'
+                        : darkMode ? 'bg-red-900/30 text-red-300' : 'bg-red-100 text-red-700'
+                    }`}>
+                      <span className="text-xs font-semibold">
+                        {fetchStatus[index].startsWith('success') ? '✅ ' : '⚠️ '}
+                        {fetchStatus[index].replace('success: ', '').replace('error: ', '')}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="grid grid-cols-4 gap-2">
+                  <div>
+                    <label className={`block text-xs font-semibold mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Kcal</label>
+                    <input
+                      type="number"
+                      placeholder="0"
+                      value={food.calories}
+                      onChange={(e) => updateFood(index, 'calories', e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-xs font-semibold mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Prot (g)</label>
+                    <input
+                      type="number"
+                      placeholder="0"
+                      value={food.protein}
+                      onChange={(e) => updateFood(index, 'protein', e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-xs font-semibold mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Carb (g)</label>
+                    <input
+                      type="number"
+                      placeholder="0"
+                      value={food.carbs}
+                      onChange={(e) => updateFood(index, 'carbs', e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-xs font-semibold mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Gord (g)</label>
+                    <input
+                      type="number"
+                      placeholder="0"
+                      value={food.fats}
+                      onChange={(e) => updateFood(index, 'fats', e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => removeFood(index)}
+                    className="text-red-600 hover:text-red-700 font-semibold text-sm flex items-center space-x-1"
+                  >
+                    <div className="w-4 h-4"><Icons.Trash /></div>
+                    <span>Remover</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        <div className="flex space-x-3">
+          <button
+            onClick={() => onSave(editedMeal)}
+            className="flex-1 bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 rounded-xl font-bold hover:shadow-lg transition"
+          >
+            Salvar Alterações
+          </button>
+          <button
+            onClick={onCancel}
+            className={`px-6 py-3 rounded-xl font-bold transition ${darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ManualWorkoutEditor = ({ workout, onSave, onCancel, darkMode }) => {
+  const [editedWorkout, setEditedWorkout] = useState(JSON.parse(JSON.stringify(workout)));
+  const [loadingExercise, setLoadingExercise] = useState({});
+  
+  const addExercise = () => {
+    setEditedWorkout({
+      ...editedWorkout,
+      exercises: [...editedWorkout.exercises, '']
+    });
+  };
+  
+  const suggestExerciseFormat = async (exerciseName, index) => {
+    if (!exerciseName || exerciseName.length < 3) return;
+    
+    setLoadingExercise(prev => ({ ...prev, [index]: true }));
+    
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: 'system',
+              content: `Você é um personal trainer que formata exercícios no padrão: "Nome do Exercício - SériesxRepetições"
+
+Exemplos:
+- "supino" → "Supino Reto - 4x10"
+- "rosca" → "Rosca Direta - 3x12"
+- "agachamento" → "Agachamento Livre - 4x12"
+
+Retorne APENAS o exercício formatado, nada mais.`
+            },
+            {
+              role: 'user',
+              content: `Formate este exercício: ${exerciseName}`
+            }
+          ]
+        })
+      });
+
+      if (!response.ok) throw new Error('Erro na API');
+
+      const data = await response.json();
+      const formatted = data.content[0].text.trim();
+      
+      const updated = [...editedWorkout.exercises];
+      updated[index] = formatted;
+      setEditedWorkout({ ...editedWorkout, exercises: updated });
+      
+    } catch (error) {
+      console.error('Erro ao formatar exercício:', error);
+    } finally {
+      setLoadingExercise(prev => ({ ...prev, [index]: false }));
+    }
+  };
+  
+  const updateExercise = (index, value) => {
+    const updated = [...editedWorkout.exercises];
+    updated[index] = value;
+    setEditedWorkout({ ...editedWorkout, exercises: updated });
+    
+    // Auto-formatação após 1 segundo
+    if (value.length >= 3 && !value.includes('-')) {
+      if (updated.typingTimer) clearTimeout(updated.typingTimer);
+      updated.typingTimer = setTimeout(() => {
+        suggestExerciseFormat(value, index);
+      }, 1000);
+    }
+  };
+  
+  const removeExercise = (index) => {
+    setEditedWorkout({
+      ...editedWorkout,
+      exercises: editedWorkout.exercises.filter((_, i) => i !== index)
+    });
+  };
+  
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div className={`rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+        <h3 className={`text-2xl font-bold mb-6 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+          Editar Treino - {workout.day}
+        </h3>
+        
+        <div className={`mb-4 p-3 rounded-xl border ${darkMode ? 'bg-purple-900/20 border-purple-700' : 'bg-purple-50 border-purple-200'}`}>
+          <p className={`text-xs ${darkMode ? 'text-purple-300' : 'text-purple-800'}`}>
+            💡 <strong>Dica:</strong> Digite o nome do exercício (ex: "supino") e a IA formatará automaticamente!
+          </p>
+        </div>
+        
+        <div className="space-y-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Foco do Treino</label>
+              <input
+                type="text"
+                value={editedWorkout.focus}
+                onChange={(e) => setEditedWorkout({ ...editedWorkout, focus: e.target.value })}
+                className={`w-full px-4 py-2 border-2 rounded-xl ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+              />
+            </div>
+            <div>
+              <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Duração</label>
+              <input
+                type="text"
+                value={editedWorkout.duration}
+                onChange={(e) => setEditedWorkout({ ...editedWorkout, duration: e.target.value })}
+                placeholder="Ex: 60 min"
+                className={`w-full px-4 py-2 border-2 rounded-xl ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+              />
+            </div>
+            <div>
+              <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Intensidade</label>
+              <select
+                value={editedWorkout.intensity}
+                onChange={(e) => setEditedWorkout({ ...editedWorkout, intensity: e.target.value })}
+                className={`w-full px-4 py-2 border-2 rounded-xl ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+              >
+                <option>Baixa</option>
+                <option>Média</option>
+                <option>Alta</option>
+                <option>Muito Alta</option>
+                <option>Cardio</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <div className="space-y-3 mb-6">
+          <div className="flex items-center justify-between">
+            <h4 className={`font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Exercícios</h4>
+            <button
+              onClick={addExercise}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-semibold"
+            >
+              <div className="w-4 h-4"><Icons.Plus /></div>
+              <span>Adicionar</span>
+            </button>
+          </div>
+          
+          {editedWorkout.exercises.map((exercise, index) => (
+            <div key={index} className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                {index + 1}
+              </div>
+              <div className="flex-1 flex items-center space-x-2">
+                <input
+                  type="text"
+                  placeholder="Ex: supino, rosca, agachamento..."
+                  value={exercise}
+                  onChange={(e) => updateExercise(index, e.target.value)}
+                  className={`flex-1 px-4 py-2 border-2 rounded-xl ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+                />
+                {loadingExercise[index] && (
+                  <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                )}
+              </div>
+              <button
+                onClick={() => removeExercise(index)}
+                className="text-red-600 hover:text-red-700 font-semibold px-3"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+        
+        <div className="flex space-x-3">
+          <button
+            onClick={() => onSave(editedWorkout)}
+            className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-bold hover:shadow-lg transition"
+          >
+            Salvar Alterações
+          </button>
+          <button
+            onClick={onCancel}
+            className={`px-6 py-3 rounded-xl font-bold transition ${darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const NotificationCenter = ({ darkMode, notifications, setNotifications, notificationSettings, setNotificationSettings }) => {
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  const markAsRead = (id) => {
+    setNotifications(prev => {
+      const updated = prev.map(n => n.id === id ? { ...n, read: true } : n);
+      localStorage.setItem('fitlife_notifications', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const clearAll = () => {
+    if (confirm('Deseja limpar todas as notificações?')) {
+      setNotifications([]);
+      localStorage.removeItem('fitlife_notifications');
+    }
+  };
+
+  const toggleSetting = (key) => {
+    setNotificationSettings(prev => {
+      const updated = { ...prev, [key]: !prev[key] };
+      localStorage.setItem('fitlife_notification_settings', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className={`rounded-2xl p-8 shadow-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className={`text-3xl font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Central de Notificações</h2>
+            <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              {unreadCount > 0 ? `${unreadCount} não lida${unreadCount > 1 ? 's' : ''}` : 'Todas lidas'}
+            </p>
+          </div>
+          {notifications.length > 0 && (
+            <button onClick={clearAll} className={`px-4 py-2 rounded-xl transition font-semibold ${darkMode ? 'bg-red-900 text-red-300 hover:bg-red-800' : 'bg-red-100 text-red-700 hover:bg-red-200'}`}>
+              Limpar Tudo
+            </button>
+          )}
+        </div>
+
+        {/* Configurações */}
+        <div className={`mb-6 p-4 rounded-xl border ${darkMode ? 'bg-blue-900/20 border-blue-800' : 'bg-blue-50 border-blue-200'}`}>
+          <h3 className={`font-bold mb-3 ${darkMode ? 'text-blue-300' : 'text-blue-800'}`}>⚙️ Configurações de Notificações</h3>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            {[
+              { key: 'meals', label: '🍽️ Refeições' },
+              { key: 'water', label: '💧 Água' },
+              { key: 'workouts', label: '💪 Treinos' },
+              { key: 'motivation', label: '⭐ Motivação' },
+              { key: 'upgrades', label: '⚡ Ofertas' }
+            ].map(setting => (
+              <button
+                key={setting.key}
+                onClick={() => toggleSetting(setting.key)}
+                className={`px-3 py-2 rounded-lg text-sm font-semibold transition ${
+                  notificationSettings[setting.key]
+                    ? darkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-700'
+                    : darkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-600'
+                }`}
+              >
+                {setting.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Lista de Notificações */}
+        <div className="space-y-3">
+          {notifications.length === 0 ? (
+            <div className={`text-center py-12 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-gray-100'}`}>
+              <div className={`text-6xl mb-4 ${darkMode ? 'text-gray-600' : 'text-gray-400'}`}>🔔</div>
+              <p className={`font-semibold ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Nenhuma notificação ainda</p>
+              <p className={`text-sm ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>Suas notificações aparecerão aqui</p>
+            </div>
+          ) : (
+            notifications.map(notif => (
+              <div
+                key={notif.id}
+                onClick={() => {
+                  markAsRead(notif.id);
+                  if (notif.action) notif.action();
+                }}
+                className={`p-4 rounded-xl border-2 cursor-pointer transition ${
+                  notif.read
+                    ? darkMode ? 'bg-gray-700/30 border-gray-700' : 'bg-gray-50 border-gray-200'
+                    : darkMode ? 'bg-blue-900/30 border-blue-700' : 'bg-blue-50 border-blue-300'
+                } ${notif.action ? 'hover:shadow-lg' : ''}`}
+              >
+                <div className="flex items-start space-x-3">
+                  <div className="text-3xl">{notif.icon}</div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <h4 className={`font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{notif.title}</h4>
+                      <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>{notif.time}</span>
+                    </div>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{notif.message}</p>
+                    {notif.discount && (
+                      <div className="mt-2">
+                        <span className="inline-block px-3 py-1 bg-gradient-to-r from-orange-600 to-red-600 text-white text-xs font-bold rounded-full">
+                          {notif.discount}
+                        </span>
+                      </div>
+                    )}
+                    {notif.action && (
+                      <p className={`text-xs mt-2 font-semibold ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                        Toque para abrir →
+                      </p>
+                    )}
+                  </div>
+                  {!notif.read && (
+                    <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+      const LoginScreen = () => {
+        const [isRegister, setIsRegister] = useState(false);
+        const [formData, setFormData] = useState({ email: '', password: '', name: '' });
+
+        const handleSubmit = (e) => {
+          e.preventDefault();
+          if (isRegister) {
+            setCurrentView('onboarding');
+          } else {
+            const saved = localStorage.getItem('fitlife_user');
+            if (saved) {
+              setUserData(JSON.parse(saved));
+              setIsLoggedIn(true);
+              setCurrentView('dashboard');
+              showNotif('🎉 Bem-vindo de volta!');
+            } else {
+              showNotif('⚠️ Usuário não encontrado');
+            }
+          }
+        };
+
+        return (
+          <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-pink-500 flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 animate-slide-up">
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl mb-4">
+                  <div className="w-12 h-12 text-white"><Icons.Dumbbell /></div>
+                </div>
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">FitLife Pro</h1>
+                <p className="text-gray-600 mt-2">Transforme seu corpo com IA</p>
+              </div>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {isRegister && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Nome Completo</label>
+                    <input type="text" required className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="Seu nome" />
+                  </div>
+                )}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                  <input type="email" required className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} placeholder="seu@email.com" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Senha</label>
+                  <input type="password" required className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} placeholder="••••••••" />
+                </div>
+                <button type="submit" className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-xl font-bold hover:shadow-xl transition">
+                  {isRegister ? '🚀 Criar Conta' : '✨ Entrar'}
+                </button>
+              </form>
+              <div className="mt-6 text-center">
+                <button onClick={() => setIsRegister(!isRegister)} className="text-blue-600 font-semibold hover:underline">
+                  {isRegister ? '← Já tem conta?' : 'Não tem conta? →'}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      const OnboardingScreen = () => {
+        const [step, setStep] = useState(1);
+        const [profile, setProfile] = useState({ 
+          name: '', age: '', gender: '', height: '', currentWeight: '', 
+          goalWeight: '', activityLevel: '', goal: '', dietaryRestrictions: [],
+          startWeight: ''
+        });
+
+        const handleComplete = () => {
+          const completeProfile = { 
+            ...profile, 
+            createdAt: new Date().toISOString(), 
+            subscription: 'free'
+          };
+          setUserData(completeProfile);
+          localStorage.setItem('fitlife_user', JSON.stringify(completeProfile));
+          
+          const initialHistory = [];
+          if (profile.startWeight) {
+            initialHistory.push({
+              date: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
+              weight: parseFloat(profile.startWeight),
+              note: '🚀 Peso inicial da jornada'
+            });
+          }
+          initialHistory.push({
+            date: new Date().toISOString(),
+            weight: parseFloat(profile.currentWeight),
+            note: '📱 Peso ao cadastrar no FitLife Pro'
+          });
+          setWeightHistory(initialHistory);
+          localStorage.setItem('fitlife_weight_history', JSON.stringify(initialHistory));
+          
+          setIsLoggedIn(true);
+          setCurrentView('dashboard');
+          showNotif('🎉 Perfil criado! Bem-vindo ao FitLife Pro!');
+        };
+
+        return (
+          <div className={`min-h-screen bg-gradient-to-br p-4 ${darkMode ? 'from-gray-900 to-gray-800' : 'from-gray-50 to-gray-100'}`}>
+            <div className="max-w-2xl mx-auto">
+              <div className={`rounded-3xl shadow-xl p-8 mt-8 animate-fade-in ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                <div className="mb-8">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className={`text-3xl font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Configure seu Perfil</h2>
+                    <span className={`text-sm font-semibold px-4 py-2 rounded-full ${darkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-100'}`}>Etapa {step}/4</span>
+                  </div>
+                  <div className={`w-full rounded-full h-3 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                    <div className="bg-gradient-to-r from-blue-600 to-purple-600 h-3 rounded-full transition-all duration-500" style={{ width: (step / 4 * 100) + '%' }} />
+                  </div>
+                </div>
+                
+                {step === 1 && (
+                  <div className="space-y-5">
+                    <h3 className={`text-xl font-bold mb-6 ${darkMode ? 'text-gray-200' : ''}`}>Informações Básicas</h3>
+                    <div>
+                      <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Nome Completo</label>
+                      <input type="text" className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 transition ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : ''}`} value={profile.name} onChange={(e) => setProfile({...profile, name: e.target.value})} placeholder="Seu nome" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Idade</label>
+                        <input type="number" className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 transition ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : ''}`} value={profile.age} onChange={(e) => setProfile({...profile, age: e.target.value})} placeholder="25" />
+                      </div>
+                      <div>
+                        <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Gênero</label>
+                        <select className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 transition ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : ''}`} value={profile.gender} onChange={(e) => setProfile({...profile, gender: e.target.value})}>
+                          <option value="">Selecione</option>
+                          <option value="male">Masculino</option>
+                          <option value="female">Feminino</option>
+                          <option value="other">Outro</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {step === 2 && (
+                  <div className="space-y-5">
+                    <h3 className={`text-xl font-bold mb-6 ${darkMode ? 'text-gray-200' : ''}`}>📊 Sua Jornada de Transformação</h3>
+                    <div className={`border-2 rounded-xl p-4 mb-4 ${darkMode ? 'bg-blue-900/20 border-blue-700' : 'bg-blue-50 border-blue-200'}`}>
+                      <p className={`text-sm ${darkMode ? 'text-blue-300' : 'text-blue-800'}`}>💡 <strong>Dica:</strong> Se você já está em processo de emagrecimento, nos conte! Vamos acompanhar TODO o seu progresso.</p>
+                    </div>
+                    
+                    <div>
+                      <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Altura (cm)</label>
+                      <input type="number" className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 transition ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : ''}`} value={profile.height} onChange={(e) => setProfile({...profile, height: e.target.value})} placeholder="170" />
+                    </div>
+                    
+                    <div className={`border-2 rounded-xl p-5 ${darkMode ? 'bg-green-900/20 border-green-700' : 'bg-gradient-to-r from-green-50 to-teal-50 border-green-200'}`}>
+                      <div className="flex items-start space-x-3 mb-4">
+                        <div className={`w-6 h-6 mt-1 ${darkMode ? 'text-green-400' : 'text-green-600'}`}><Icons.Target /></div>
+                        <div className="flex-1">
+                          <p className={`font-bold mb-2 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>📈 Já está em processo de emagrecimento?</p>
+                          <p className={`text-sm mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Vamos celebrar cada conquista juntos! 🎉</p>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <div>
+                          <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Qual era seu peso quando começou? (opcional)</label>
+                          <input type="number" step="0.1" className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-green-500 transition ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-green-300 bg-white'}`} value={profile.startWeight} onChange={(e) => setProfile({...profile, startWeight: e.target.value})} placeholder="Ex: 110.0 kg" />
+                        </div>
+                        
+                        <div>
+                          <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>⚖️ Peso Atual (kg)</label>
+                          <input type="number" step="0.1" className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 transition ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : ''}`} value={profile.currentWeight} onChange={(e) => setProfile({...profile, currentWeight: e.target.value})} placeholder="96.0" />
+                        </div>
+                        
+                        {profile.startWeight && profile.currentWeight && (
+                          <div className={`mt-3 p-3 rounded-lg border ${darkMode ? 'bg-green-800 border-green-600' : 'bg-green-100 border-green-300'}`}>
+                            <p className={`text-sm font-bold ${darkMode ? 'text-green-300' : 'text-green-800'}`}>
+                              🎊 Incrível! Você já perdeu {(parseFloat(profile.startWeight) - parseFloat(profile.currentWeight)).toFixed(1)}kg! 
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>🎯 Peso Meta (kg)</label>
+                      <input type="number" step="0.1" className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 transition ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : ''}`} value={profile.goalWeight} onChange={(e) => setProfile({...profile, goalWeight: e.target.value})} placeholder="85.0" />
+                    </div>
+                    
+                    <div>
+                      <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Nível de Atividade</label>
+                      <select className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 transition ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : ''}`} value={profile.activityLevel} onChange={(e) => setProfile({...profile, activityLevel: e.target.value})}>
+                        <option value="">Selecione</option>
+                        <option value="sedentary">🪑 Sedentário</option>
+                        <option value="light">🚶 Levemente ativo</option>
+                        <option value="moderate">🏃 Moderadamente ativo</option>
+                        <option value="very">💪 Muito ativo</option>
+                        <option value="extra">🔥 Extremamente ativo</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+                
+                {step === 3 && (
+                  <div className="space-y-5">
+                    <h3 className={`text-xl font-bold mb-6 ${darkMode ? 'text-gray-200' : ''}`}>🎯 Seus Objetivos</h3>
+                    <div>
+                      <label className={`block text-sm font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Objetivo Principal</label>
+                      <select className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 transition ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : ''}`} value={profile.goal} onChange={(e) => setProfile({...profile, goal: e.target.value})}>
+                        <option value="">Selecione</option>
+                        <option value="lose">📉 Perder peso</option>
+                        <option value="gain">💪 Ganhar massa</option>
+                        <option value="maintain">⚖️ Manter peso</option>
+                        <option value="athletic">🏆 Performance</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className={`block text-sm font-semibold mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Restrições Alimentares</label>
+                      <div className="space-y-3">
+                        {['Vegetariano', 'Vegano', 'Sem Glúten', 'Sem Lactose', 'Diabético', 'Sem Açúcar'].map(r => (
+                          <label key={r} className={`flex items-center p-3 border-2 rounded-xl cursor-pointer transition ${darkMode ? 'border-gray-700 hover:border-blue-500' : 'hover:border-blue-500'}`}>
+                            <input type="checkbox" className="w-5 h-5 text-blue-600 rounded" onChange={(e) => {
+                              if (e.target.checked) setProfile({...profile, dietaryRestrictions: [...profile.dietaryRestrictions, r]});
+                              else setProfile({...profile, dietaryRestrictions: profile.dietaryRestrictions.filter(x => x !== r)});
+                            }} />
+                            <span className={`ml-3 font-medium ${darkMode ? 'text-gray-200' : ''}`}>{r}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {step === 4 && (
+                  <div className="space-y-5">
+                    <h3 className={`text-xl font-bold mb-6 text-center ${darkMode ? 'text-gray-200' : ''}`}>🎉 Escolha seu Plano!</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className={`border-2 rounded-2xl p-6 cursor-pointer transition ${profile.subscription === 'free' ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-blue-400'}`} onClick={() => setProfile({...profile, subscription: 'free'})}>
+                        <div className="text-center">
+                          <h4 className="text-xl font-bold mb-2">🆓 Grátis</h4>
+                          <p className="text-3xl font-black text-blue-600 mb-4">R$ 0</p>
+                          <ul className="text-sm space-y-2 text-left">
+                            <li className="flex items-start"><span className="mr-2">✓</span> 10 mensagens IA/dia</li>
+                            <li className="flex items-start"><span className="mr-2">✓</span> Plano básico</li>
+                          </ul>
+                        </div>
+                      </div>
+
+                      <div className={`border-2 rounded-2xl p-6 cursor-pointer transition relative ${profile.subscription === 'premium' ? 'border-purple-500 bg-purple-50' : 'border-gray-300 hover:border-purple-400'}`} onClick={() => setProfile({...profile, subscription: 'premium'})}>
+                        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-1 rounded-full text-xs font-bold">
+                          POPULAR
+                        </div>
+                        <div className="text-center">
+                          <h4 className="text-xl font-bold mb-2">⭐ Premium</h4>
+                          <p className="text-3xl font-black text-purple-600 mb-4">R$ 29,90<span className="text-sm">/mês</span></p>
+                          <ul className="text-sm space-y-2 text-left">
+                            <li className="flex items-start"><span className="mr-2">✓</span> 100 mensagens/dia</li>
+                            <li className="flex items-start"><span className="mr-2">✓</span> Personalização IA</li>
+                          </ul>
+                        </div>
+                      </div>
+
+                      <div className={`border-2 rounded-2xl p-6 cursor-pointer transition relative ${profile.subscription === 'annual' ? 'border-green-500 bg-green-50' : 'border-gray-300 hover:border-green-400'}`} onClick={() => setProfile({...profile, subscription: 'annual'})}>
+                        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-green-600 to-teal-600 text-white px-4 py-1 rounded-full text-xs font-bold">
+                          -40% OFF
+                        </div>
+                        <div className="text-center">
+                          <h4 className="text-xl font-bold mb-2">🏆 Anual</h4>
+                          <p className="text-3xl font-black text-green-600 mb-1">R$ 17,90<span className="text-sm">/mês</span></p>
+                          <p className="text-xs text-gray-600 mb-4">R$ 214,80/ano</p>
+                          <ul className="text-sm space-y-2 text-left">
+                            <li className="flex items-start"><span className="mr-2">✓</span> Ilimitado</li>
+                            <li className="flex items-start"><span className="mr-2">✓</span> Economize R$144</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                <div className={`flex justify-between mt-8 pt-6 border-t-2 ${darkMode ? 'border-gray-700' : ''}`}>
+                  {step > 1 && (
+                    <button onClick={() => setStep(step - 1)} className={`px-8 py-3 border-2 rounded-xl font-bold transition ${darkMode ? 'border-gray-600 text-gray-200 hover:bg-gray-700' : 'hover:bg-gray-50'}`}>← Voltar</button>
+                  )}
+                  {step < 4 ? (
+                    <button onClick={() => setStep(step + 1)} disabled={
+                      (step === 1 && (!profile.name || !profile.age || !profile.gender)) ||
+                      (step === 2 && (!profile.height || !profile.currentWeight || !profile.goalWeight || !profile.activityLevel)) ||
+                      (step === 3 && !profile.goal)
+                    } className="ml-auto px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold hover:shadow-xl transition disabled:opacity-50">
+                      Próximo →
+                    </button>
+                  ) : (
+                    <button onClick={handleComplete} disabled={!profile.subscription} className="ml-auto px-8 py-3 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-xl font-bold hover:shadow-xl transition disabled:opacity-50">
+                      🚀 Começar!
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      };
+    
+const Dashboard = () => {
+        const currentWeight = parseFloat(userData?.currentWeight || 0);
+        const goalWeight = parseFloat(userData?.goalWeight || 0);
+        const startWeight = parseFloat(userData?.startWeight || currentWeight);
+        const totalLoss = startWeight - currentWeight;
+        const remaining = currentWeight - goalWeight;
+        const totalGoal = startWeight - goalWeight;
+        const totalProgress = totalGoal > 0 ? ((totalLoss / totalGoal) * 100).toFixed(1) : 0;
+        const firstName = userData?.name?.split(' ')[0] || 'Usuário';
+
+        const totalCalories = MEAL_DATA.reduce((sum, meal) => {
+          const mealTotal = calculateMealTotals(meal);
+          return sum + mealTotal.calories;
+        }, 0);
+        
+        const consumedCalories = MEAL_DATA.reduce((sum, meal) => {
+          const completedInMeal = meal.foods.filter(food => completedFoods.includes(food.id));
+          const mealCalories = completedInMeal.reduce((acc, food) => acc + food.calories, 0);
+          return sum + mealCalories;
+        }, 0);
+        
+        const calorieProgress = NUTRITION_GOALS.dailyCalories > 0 ? ((consumedCalories / NUTRITION_GOALS.dailyCalories) * 100).toFixed(0) : 0;
+        
+        return (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 rounded-2xl p-8 text-white shadow-xl">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex-1">
+                  <h2 className="text-3xl md:text-4xl font-bold mb-2">Olá, {firstName}! 👋</h2>
+                  <p className="text-white/90 text-lg mb-4">Continue firme na sua jornada de transformação!</p>
+                  
+                  {userData?.startWeight && (
+                    <div className="space-y-2 bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-white/80 text-sm">🚀 Peso Inicial</span>
+                        <span className="font-bold">{userData.startWeight} kg</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-white/80 text-sm">⚖️ Peso Atual</span>
+                        <span className="font-bold text-green-300">{currentWeight} kg</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-white/80 text-sm">🎯 Peso Meta</span>
+                        <span className="font-bold text-blue-300">{goalWeight} kg</span>
+                      </div>
+                      <div className="border-t border-white/20 pt-2 mt-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold">Já perdeu</span>
+                          <span className="font-bold text-xl text-green-300">🎉 {totalLoss.toFixed(1)} kg</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold">Faltam</span>
+                          <span className="font-bold text-xl text-blue-300">💪 {remaining.toFixed(1)} kg</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="relative">
+                  <svg className="transform -rotate-90" width="180" height="180">
+                    <circle cx="90" cy="90" r="70" stroke="rgba(255,255,255,0.2)" strokeWidth="12" fill="none" />
+                    <circle cx="90" cy="90" r="70" stroke="white" strokeWidth="12" fill="none" strokeDasharray={440} strokeDashoffset={440 - (totalProgress / 100) * 440} strokeLinecap="round" />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-4xl font-bold">{totalProgress}%</span>
+                    <span className="text-sm text-white/80">Progresso</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+              <div className={`rounded-2xl p-6 shadow-lg border-2 hover:shadow-xl transition cursor-pointer ${darkMode ? 'bg-gray-800 border-blue-900' : 'bg-white border-blue-100'}`} onClick={addWeightEntry}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className={`font-bold text-lg ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Peso Atual</h3>
+                  <div className="w-10 h-10 text-blue-600"><Icons.Scale /></div>
+                </div>
+                <p className="text-5xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{currentWeight}</p>
+                <p className={`text-sm mt-2 font-semibold ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Meta: {goalWeight} kg</p>
+                <div className="mt-3 text-xs text-blue-600 font-bold">Clique para atualizar →</div>
+              </div>
+              
+              <div className={`rounded-2xl p-6 shadow-lg border-2 hover:shadow-xl transition ${darkMode ? 'bg-gray-800 border-green-900' : 'bg-white border-green-100'}`}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className={`font-bold text-lg ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Calorias Hoje</h3>
+                  <div className="w-10 h-10 text-green-600"><Icons.Fire /></div>
+                </div>
+                <p className="text-5xl font-black bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">{consumedCalories}</p>
+                <p className={`text-sm mt-2 font-semibold ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>de {NUTRITION_GOALS.dailyCalories} kcal</p>
+                <div className={`w-full rounded-full h-2 mt-3 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                  <div className="bg-gradient-to-r from-green-500 to-teal-500 h-2 rounded-full transition-all duration-500" style={{ width: Math.min(calorieProgress, 100) + '%' }} />
+                </div>
+              </div>
+              
+              <div className={`rounded-2xl p-6 shadow-lg border-2 hover:shadow-xl transition ${darkMode ? 'bg-gray-800 border-orange-900' : 'bg-white border-orange-100'}`}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className={`font-bold text-lg ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Sequência</h3>
+                  <div className="w-10 h-10 text-orange-600"><Icons.Trophy /></div>
+                </div>
+                <p className="text-5xl font-black bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">{dailyStreak}</p>
+                <p className={`text-sm mt-2 font-semibold ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>dias consecutivos! 🔥</p>
+              </div>
+            </div>
+            
+            {weightHistory.length > 1 && (
+              <div className={`rounded-2xl p-6 shadow-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
+                <h3 className={`text-xl font-bold mb-4 flex items-center ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                  <div className="w-6 h-6 mr-2 text-purple-600"><Icons.History /></div>
+                  Histórico de Peso
+                </h3>
+                <div className="space-y-3">
+                  {weightHistory.slice(-5).reverse().map((entry, i) => {
+                    const prevWeight = i < weightHistory.length - 1 ? weightHistory[weightHistory.length - i - 2].weight : entry.weight;
+                    const diff = entry.weight - prevWeight;
+                    return (
+                      <div key={i} className={`flex items-center justify-between p-3 rounded-xl border ${darkMode ? 'bg-gray-700 border-purple-900' : 'bg-purple-50 border-purple-200'}`}>
+                        <div>
+                          <p className={`font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{entry.weight} kg</p>
+                          <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{new Date(entry.date).toLocaleDateString('pt-BR')}</p>
+                          {entry.note && <p className={`text-xs italic mt-1 ${darkMode ? 'text-purple-400' : 'text-purple-700'}`}>{entry.note}</p>}
+                        </div>
+                        {i > 0 && diff !== 0 && (
+                          <span className={`text-sm font-bold px-3 py-1 rounded-full ${
+                            diff < 0 
+                              ? darkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-700'
+                              : darkMode ? 'bg-red-900 text-red-300' : 'bg-red-100 text-red-700'
+                          }`}>
+                            {diff < 0 ? '↓' : '↑'} {Math.abs(diff).toFixed(1)}kg
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className={`rounded-2xl p-6 shadow-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className={`text-2xl font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Treino de Hoje</h3>
+                  <button onClick={() => {setChatOpen(true); setChatInput('Ajuste meu treino de hoje baseado no meu nível e objetivo');}} className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition font-semibold ${darkMode ? 'bg-blue-900 text-blue-300 hover:bg-blue-800' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`}>
+                    <div className="w-5 h-5"><Icons.Sparkles /></div>
+                    <span>IA</span>
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {WORKOUT_DATA.slice(0, 3).map((ex, i) => (
+                    <div key={ex.id} className={`flex items-start space-x-4 p-4 rounded-xl border-2 transition cursor-pointer ${
+                      completedWorkouts.includes(ex.id) 
+                        ? darkMode ? 'bg-green-900/20 border-green-700' : 'bg-green-50 border-green-300'
+                        : darkMode ? 'bg-gradient-to-r from-blue-900/20 to-purple-900/20 border-blue-800' : 'bg-gradient-to-r from-blue-50 to-purple-50 border-blue-100'
+                    }`} onClick={() => toggleWorkoutComplete(ex.id)}>
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0 ${
+                        completedWorkouts.includes(ex.id) ? 'bg-green-600' : 'bg-gradient-to-r from-blue-600 to-purple-600'
+                      }`}>
+                        {completedWorkouts.includes(ex.id) ? <Icons.Check /> : i + 1}
+                      </div>
+                      <div className="flex-1">
+                        <p className={`font-bold text-lg ${completedWorkouts.includes(ex.id) ? darkMode ? 'line-through text-gray-400' : 'line-through text-gray-500' : darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{ex.focus}</p>
+                        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{ex.duration}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button onClick={() => setCurrentView('workout')} className="w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-xl font-bold hover:shadow-xl transition">
+                  Ver Treino Completo
+                </button>
+              </div>
+              
+              <div className={`rounded-2xl p-6 shadow-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className={`text-2xl font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Refeições Hoje</h3>
+                  <button onClick={() => {setChatOpen(true); setChatInput('Sugira alternativas saudáveis para minhas refeições');}} className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition font-semibold ${darkMode ? 'bg-green-900 text-green-300 hover:bg-green-800' : 'bg-green-50 text-green-600 hover:bg-green-100'}`}>
+                    <div className="w-5 h-5"><Icons.Sparkles /></div>
+                    <span>IA</span>
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {MEAL_DATA.slice(0, 3).map((m) => {
+                    const mealTotals = calculateMealTotals(m);
+                    const completedInMeal = m.foods.filter(f => completedFoods.includes(f.id)).length;
+                    const allCompleted = completedInMeal === m.foods.length;
+                    return (
+                      <div key={m.id} className={`p-4 border-l-4 rounded-r-xl transition ${
+                        allCompleted
+                          ? darkMode ? 'border-green-500 bg-green-900/20' : 'border-green-500 bg-green-50'
+                          : darkMode ? 'border-green-500 bg-gradient-to-r from-green-900/20 to-teal-900/20' : 'border-green-500 bg-gradient-to-r from-green-50 to-teal-50'
+                      }`}>
+                        <div className="flex justify-between items-start">
+                          <div className="flex items-start space-x-3 flex-1">
+                            <div className={`w-8 h-8 mt-1 ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
+                              {m.id === 'm1' ? <Icons.Sun /> : m.id === 'm2' ? <Icons.Apple /> : <Icons.Utensils />}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2">
+                                <p className={`font-bold text-lg ${allCompleted ? darkMode ? 'line-through text-gray-400' : 'line-through text-gray-500' : darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{m.meal}</p>
+                                <span className={`text-xs font-semibold ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>({m.time})</span>
+                              </div>
+                              <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{completedInMeal}/{m.foods.length} itens</p>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end">
+                            <span className={`text-sm font-bold px-3 py-1 rounded-full ${darkMode ? 'text-green-400 bg-green-900' : 'text-green-700 bg-green-100'}`}>{mealTotals.calories} kcal</span>
+                            {allCompleted && (
+                              <span className={`text-xs mt-1 font-semibold ${darkMode ? 'text-green-400' : 'text-green-600'}`}>✅ Completo!</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className={`mt-4 p-3 rounded-xl border ${darkMode ? 'bg-blue-900/20 border-blue-800' : 'bg-blue-50 border-blue-200'}`}>
+                  <p className={`text-sm ${darkMode ? 'text-blue-300' : 'text-blue-800'}`}>
+                    <strong>Progresso:</strong> {consumedCalories.toFixed(0)} / {NUTRITION_GOALS.dailyCalories} kcal ({calorieProgress}%)
+                  </p>
+                </div>
+                <button onClick={() => setCurrentView('nutrition')} className="w-full mt-6 bg-gradient-to-r from-green-600 to-teal-600 text-white py-4 rounded-xl font-bold hover:shadow-xl transition">
+                  Ver Plano Completo
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      const NutritionPlan = () => {
+        const totalDailyNutrition = MEAL_DATA.reduce((acc, meal) => {
+          const mealTotals = calculateMealTotals(meal);
+          return {
+            calories: acc.calories + mealTotals.calories,
+            protein: acc.protein + mealTotals.protein,
+            carbs: acc.carbs + mealTotals.carbs,
+            fats: acc.fats + mealTotals.fats
+          };
+        }, { calories: 0, protein: 0, carbs: 0, fats: 0 });
+        
+        const consumedNutrition = MEAL_DATA.reduce((acc, meal) => {
+          const completedInMeal = meal.foods.filter(food => completedFoods.includes(food.id));
+          completedInMeal.forEach(food => {
+            acc.calories += food.calories;
+            acc.protein += food.protein;
+            acc.carbs += food.carbs;
+            acc.fats += food.fats;
+          });
+          return acc;
+        }, { calories: 0, protein: 0, carbs: 0, fats: 0 });
+        
+        return (
+          <div className="space-y-6">
+            <div className={`rounded-2xl p-8 shadow-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 text-green-600"><Icons.Apple /></div>
+                  <div>
+                    <h2 className={`text-3xl font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Seu Plano Alimentar</h2>
+                    {mealPlan && <p className={`text-sm ${darkMode ? 'text-green-400' : 'text-green-600'}`}>✨ Personalizado com IA</p>}
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button onClick={() => {setChatOpen(true); setChatInput('Quero personalizar minhas refeições. Exemplo: trocar café da manhã por tapioca com queijo');}} className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-xl hover:shadow-lg transition font-bold">
+                    <div className="w-5 h-5"><Icons.Sparkles /></div>
+                    <span>Personalizar com IA</span>
+                  </button>
+                  {mealPlan && (
+                    <button onClick={resetMealPlan} className={`flex items-center space-x-2 px-4 py-3 rounded-xl transition font-semibold ${darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>
+                      <div className="w-5 h-5"><Icons.RefreshCw /></div>
+                      <span>Restaurar</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div className={`rounded-xl p-4 border-2 ${darkMode ? 'bg-gradient-to-br from-blue-900 to-blue-800 border-blue-700' : 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200'}`}>
+                  <p className={`text-xs font-semibold mb-1 ${darkMode ? 'text-blue-300' : 'text-blue-700'}`}>Calorias</p>
+                  <p className={`text-2xl font-bold ${darkMode ? 'text-blue-100' : 'text-blue-900'}`}>{NUTRITION_GOALS.dailyCalories}</p>
+                  <p className={`text-xs mt-1 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>{consumedNutrition.calories.toFixed(0)} / {totalDailyNutrition.calories.toFixed(0)}</p>
+                </div>
+                <div className={`rounded-xl p-4 border-2 ${darkMode ? 'bg-gradient-to-br from-green-900 to-green-800 border-green-700' : 'bg-gradient-to-br from-green-50 to-green-100 border-green-200'}`}>
+                  <p className={`text-xs font-semibold mb-1 ${darkMode ? 'text-green-300' : 'text-green-700'}`}>Proteínas</p>
+                  <p className={`text-2xl font-bold ${darkMode ? 'text-green-100' : 'text-green-900'}`}>{NUTRITION_GOALS.protein}g</p>
+                  <p className={`text-xs mt-1 ${darkMode ? 'text-green-400' : 'text-green-600'}`}>{consumedNutrition.protein.toFixed(0)} / {totalDailyNutrition.protein.toFixed(0)}g</p>
+                </div>
+                <div className={`rounded-xl p-4 border-2 ${darkMode ? 'bg-gradient-to-br from-purple-900 to-purple-800 border-purple-700' : 'bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200'}`}>
+                  <p className={`text-xs font-semibold mb-1 ${darkMode ? 'text-purple-300' : 'text-purple-700'}`}>Carboidratos</p>
+                  <p className={`text-2xl font-bold ${darkMode ? 'text-purple-100' : 'text-purple-900'}`}>{NUTRITION_GOALS.carbs}g</p>
+                  <p className={`text-xs mt-1 ${darkMode ? 'text-purple-400' : 'text-purple-600'}`}>{consumedNutrition.carbs.toFixed(0)} / {totalDailyNutrition.carbs.toFixed(0)}g</p>
+                </div>
+                <div className={`rounded-xl p-4 border-2 ${darkMode ? 'bg-gradient-to-br from-orange-900 to-orange-800 border-orange-700' : 'bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200'}`}>
+                  <p className={`text-xs font-semibold mb-1 ${darkMode ? 'text-orange-300' : 'text-orange-700'}`}>Gorduras</p>
+                  <p className={`text-2xl font-bold ${darkMode ? 'text-orange-100' : 'text-orange-900'}`}>{NUTRITION_GOALS.fats}g</p>
+                  <p className={`text-xs mt-1 ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>{consumedNutrition.fats.toFixed(0)} / {totalDailyNutrition.fats.toFixed(0)}g</p>
+                </div>
+              </div>
+              
+              <div className="space-y-6">
+                {MEAL_DATA.map((meal) => {
+                  const mealTotals = calculateMealTotals(meal);
+                  const completedInMeal = meal.foods.filter(f => completedFoods.includes(f.id)).length;
+                  const allCompleted = completedInMeal === meal.foods.length;
+                  
+                  return (
+                    <div key={meal.id} className={`border-2 rounded-2xl p-6 transition ${
+                      allCompleted 
+                        ? darkMode ? 'border-green-500 bg-green-900/20' : 'border-green-500 bg-green-50'
+                        : darkMode ? 'border-gray-700 hover:border-green-500' : 'border-gray-200 hover:border-green-500'
+                    }`}>
+                      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 gap-4">
+                        <div className="flex-1">
+                          <div className="flex flex-wrap items-center gap-3 mb-2">
+                            <span className={`text-2xl font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{meal.meal}</span>
+                            <span className={`text-sm font-semibold px-3 py-1 rounded-full ${darkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-100 text-gray-500'}`}>{meal.time}</span>
+                            {allCompleted && (
+                              <span className={`text-sm font-bold px-3 py-1 rounded-full ${darkMode ? 'text-green-400 bg-green-900' : 'text-green-600 bg-green-100'}`}>✅ Completo</span>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            <span className={`text-xs font-semibold px-2 py-1 rounded ${darkMode ? 'bg-blue-900 text-blue-300' : 'bg-blue-100 text-blue-700'}`}>
+                              {mealTotals.calories.toFixed(0)} kcal
+                            </span>
+                            <span className={`text-xs font-semibold px-2 py-1 rounded ${darkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-700'}`}>
+                              P: {mealTotals.protein.toFixed(0)}g
+                            </span>
+                            <span className={`text-xs font-semibold px-2 py-1 rounded ${darkMode ? 'bg-purple-900 text-purple-300' : 'bg-purple-100 text-purple-700'}`}>
+                              C: {mealTotals.carbs.toFixed(0)}g
+                            </span>
+                            <span className={`text-xs font-semibold px-2 py-1 rounded ${darkMode ? 'bg-orange-900 text-orange-300' : 'bg-orange-100 text-orange-700'}`}>
+                              G: {mealTotals.fats.toFixed(0)}g
+                            </span>
+                          </div>
+                        </div>
+                        <button onClick={() => editMeal(meal)} className={`px-4 py-2 rounded-xl transition font-semibold text-sm ${darkMode ? 'bg-blue-900 text-blue-300 hover:bg-blue-800' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`}>
+                          <div className="w-4 h-4 inline-block mr-1"><Icons.Edit /></div>
+                          Editar
+                        </button>
+                      </div>
+                      
+                      <div className="space-y-2 mt-4">
+                        {meal.foods.map((food) => {
+                          const isCompleted = completedFoods.includes(food.id);
+                          return (
+                            <div 
+                              key={food.id} 
+                              onClick={() => toggleFoodComplete(food.id)}
+                              className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition ${
+                                isCompleted 
+                                  ? darkMode ? 'bg-green-900/30' : 'bg-green-100' 
+                                  : darkMode ? 'bg-gray-700/50 hover:bg-gray-700' : 'bg-gray-50 hover:bg-gray-100'
+                              }`}
+                            >
+                              <div className="flex items-center space-x-3 flex-1">
+                                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition ${
+                                  isCompleted 
+                                    ? 'bg-green-500 border-green-500' 
+                                    : darkMode ? 'border-gray-500' : 'border-gray-300'
+                                }`}>
+                                  {isCompleted && <Icons.Check />}
+                                </div>
+                                <span className={`font-medium ${isCompleted ? darkMode ? 'text-gray-400 line-through' : 'text-gray-500 line-through' : darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                  {food.name}
+                                </span>
+                              </div>
+                              <div className="flex gap-2 ml-4 flex-wrap">
+                                <span className={`text-xs font-semibold px-2 py-1 rounded ${darkMode ? 'bg-blue-800 text-blue-200' : 'bg-blue-50 text-blue-700'}`}>
+                                  {food.calories} kcal
+                                </span>
+                                <span className={`text-xs font-semibold px-2 py-1 rounded ${darkMode ? 'bg-green-800 text-green-200' : 'bg-green-50 text-green-700'}`}>
+                                  P: {food.protein}g
+                                </span>
+                                <span className={`text-xs font-semibold px-2 py-1 rounded ${darkMode ? 'bg-purple-800 text-purple-200' : 'bg-purple-50 text-purple-700'}`}>
+                                  C: {food.carbs}g
+                                </span>
+                                <span className={`text-xs font-semibold px-2 py-1 rounded ${darkMode ? 'bg-orange-800 text-orange-200' : 'bg-orange-50 text-orange-700'}`}>
+                                  G: {food.fats}g
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              
+              <div className={`mt-6 p-4 rounded-xl border ${darkMode ? 'bg-blue-900/20 border-blue-800' : 'bg-blue-50 border-blue-200'}`}>
+                <p className={`text-sm font-semibold ${darkMode ? 'text-blue-300' : 'text-blue-800'}`}>
+                  📊 Progresso: {consumedNutrition.calories.toFixed(0)} / {NUTRITION_GOALS.dailyCalories} kcal consumidas hoje
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+const WorkoutPlan = () => (
+        <div className="space-y-6">
+          <div className={`rounded-2xl p-8 shadow-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 text-blue-600"><Icons.Dumbbell /></div>
+                <div>
+                  <h2 className={`text-3xl font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Plano de Treino Semanal</h2>
+                  {workoutPlan && <p className={`text-sm ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>✨ Personalizado com IA</p>}
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button onClick={() => {setChatOpen(true); setChatInput('Ajustar meu treino semanal. Exemplo: quero mais peito na segunda-feira');}} className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-lg transition font-bold">
+                  <div className="w-5 h-5"><Icons.Sparkles /></div>
+                  <span>Ajustar com IA</span>
+                </button>
+                {workoutPlan && (
+                  <button onClick={resetWorkoutPlan} className={`flex items-center space-x-2 px-4 py-3 rounded-xl transition font-semibold ${darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>
+                    <div className="w-5 h-5"><Icons.RefreshCw /></div>
+                    <span>Restaurar</span>
+                  </button>
+                )}
+              </div>
+            </div>
+            
+            <div className="space-y-6">
+              {WORKOUT_DATA.map((workout) => (
+                <div key={workout.id} className={`border-2 rounded-2xl p-6 transition ${
+                  completedWorkouts.includes(workout.id) 
+                    ? darkMode ? 'border-green-500 bg-green-900/20' : 'border-green-500 bg-green-50'
+                    : darkMode ? 'border-blue-800 bg-gradient-to-r from-blue-900/20 to-purple-900/20 hover:border-blue-500' : 'border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50 hover:border-blue-500'
+                }`}>
+                  <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 gap-4">
+                    <div className="flex-1">
+                      <div className="flex flex-wrap items-center gap-3 mb-2">
+                        <h3 className={`font-bold text-2xl ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{workout.day}</h3>
+                        {completedWorkouts.includes(workout.id) && (
+                          <span className={`text-sm font-bold px-3 py-1 rounded-full ${darkMode ? 'text-green-400 bg-green-900' : 'text-green-600 bg-green-100'}`}>✅ Concluído</span>
+                        )}
+                        <span className={`text-xs font-semibold px-3 py-1 rounded-full ${darkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-100 text-gray-600'}`}>
+                          {workout.intensity}
+                        </span>
+                      </div>
+                      <p className={`text-lg font-semibold ${darkMode ? 'text-blue-400' : 'text-blue-700'}`}>{workout.focus}</p>
+                      <p className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{workout.muscleGroups.join(', ')}</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className={`text-sm font-bold px-4 py-2 rounded-xl ${darkMode ? 'text-blue-400 bg-blue-900' : 'text-blue-700 bg-blue-100'}`}>
+                        {workout.duration}
+                      </span>
+                      
+                      {/* CALORIAS QUEIMADAS */}
+                      {workoutCalories[workout.id] && completedWorkouts.includes(workout.id) && (
+                        <span className={`text-sm font-bold px-4 py-2 rounded-xl ${darkMode ? 'text-orange-400 bg-orange-900' : 'text-orange-700 bg-orange-100'}`}>
+                          🔥 {workoutCalories[workout.id]} kcal
+                        </span>
+                      )}
+                      
+                      <button onClick={() => toggleWorkoutComplete(workout.id)} className={`px-4 py-2 rounded-xl transition font-semibold text-sm ${
+                        completedWorkouts.includes(workout.id)
+                          ? darkMode ? 'bg-green-900 text-green-300 hover:bg-green-800' : 'bg-green-100 text-green-700 hover:bg-green-200'
+                          : darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}>
+                        {completedWorkouts.includes(workout.id) ? '✓ Feito' : 'Marcar'}
+                      </button>
+                      <button onClick={() => editWorkout(workout)} className={`px-4 py-2 rounded-xl transition font-semibold text-sm ${darkMode ? 'bg-purple-900 text-purple-300 hover:bg-purple-800' : 'bg-purple-50 text-purple-600 hover:bg-purple-100'}`}>
+                        <div className="w-4 h-4 inline-block mr-1"><Icons.Edit /></div>
+                        Editar
+                      </button>
+                    </div>
+                  </div>
+                  <div className="space-y-2 mt-4">
+                    {workout.exercises.map((exercise, j) => (
+                      <div key={j} className="flex items-center space-x-3">
+                        <div className="w-6 h-6 bg-blue-600 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{j + 1}</div>
+                        <span className={`font-medium ${completedWorkouts.includes(workout.id) ? darkMode ? 'text-gray-400 line-through' : 'text-gray-500 line-through' : darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{exercise}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {/* RESUMO COM TOTAL DE CALORIAS */}
+            <div className={`mt-6 p-4 rounded-xl border ${darkMode ? 'bg-orange-900/20 border-orange-800' : 'bg-orange-50 border-orange-200'}`}>
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
+                <p className={`text-sm font-semibold ${darkMode ? 'text-orange-300' : 'text-orange-800'}`}>
+                  💪 Treinos completados esta semana: {completedWorkouts.filter(id => WORKOUT_DATA.some(w => w.id === id)).length}/{WORKOUT_DATA.length}
+                </p>
+                {Object.keys(workoutCalories).length > 0 && (
+                  <p className={`text-sm font-bold px-3 py-1 rounded-full ${darkMode ? 'bg-orange-800 text-orange-200' : 'bg-orange-200 text-orange-800'}`}>
+                    🔥 {Object.values(workoutCalories).reduce((sum, cal) => sum + cal, 0)} kcal queimadas
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+
+      const ProgressPhotos = () => {
+        const handlePhotoUpload = (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const newPhoto = {
+                id: Date.now(),
+                url: reader.result,
+                date: new Date().toLocaleDateString('pt-BR'),
+                weight: userData?.currentWeight || 0
+              };
+              const updated = [...progressPhotos, newPhoto];
+              setProgressPhotos(updated);
+              localStorage.setItem('fitlife_photos', JSON.stringify(updated));
+              showNotif('📸 Foto adicionada com sucesso!');
+            };
+            reader.readAsDataURL(file);
+          }
+        };
+
+        return (
+          <div className="space-y-6">
+            <div className={`rounded-2xl p-8 shadow-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 text-purple-600"><Icons.Camera /></div>
+                  <h2 className={`text-3xl font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Fotos de Progresso</h2>
+                </div>
+                <label className="cursor-pointer flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:shadow-lg transition font-bold">
+                  <div className="w-5 h-5"><Icons.Camera /></div>
+                  <span>Adicionar Foto</span>
+                  <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
+                </label>
+              </div>
+              
+              {progressPhotos.length === 0 ? (
+                <div className={`text-center py-20 rounded-2xl border-2 border-dashed ${darkMode ? 'bg-gradient-to-br from-gray-900 to-gray-800 border-gray-600' : 'bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300'}`}>
+                  <div className={`w-24 h-24 mx-auto mb-6 ${darkMode ? 'text-gray-600' : 'text-gray-400'}`}><Icons.Camera /></div>
+                  <h3 className={`text-2xl font-bold mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Nenhuma foto ainda</h3>
+                  <p className={`mb-6 text-lg ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Comece a documentar sua transformação!</p>
+                  <label className="inline-flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:shadow-lg transition font-bold cursor-pointer">
+                    <div className="w-5 h-5"><Icons.Camera /></div>
+                    <span>Adicionar Primeira Foto</span>
+                    <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
+                  </label>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  {progressPhotos.map((photo) => (
+                    <div key={photo.id} className="group">
+                      <div className={`aspect-square rounded-2xl overflow-hidden shadow-lg group-hover:shadow-2xl transition border-4 ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-200 border-white'}`}>
+                        <img src={photo.url} alt="Progress" className="w-full h-full object-cover" />
+                      </div>
+                      <div className="mt-3 text-center">
+                        <p className={`text-sm font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{photo.date}</p>
+                        <p className={`text-xs font-semibold inline-block px-3 py-1 rounded-full mt-1 ${darkMode ? 'text-gray-400 bg-gray-700' : 'text-gray-600 bg-gray-100'}`}>{photo.weight} kg</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      };
+
+      const ProfileSettings = () => {
+        const currentWeight = parseFloat(userData?.currentWeight || 0);
+        const goalWeight = parseFloat(userData?.goalWeight || 0);
+        const startWeight = parseFloat(userData?.startWeight || currentWeight);
+        const totalLoss = startWeight - currentWeight;
+        const remaining = currentWeight - goalWeight;
+        const totalGoal = startWeight - goalWeight;
+        const totalProgress = totalGoal > 0 ? ((totalLoss / totalGoal) * 100).toFixed(1) : 0;
+
+        return (
+          <div className="space-y-6">
+            <div className={`rounded-2xl p-8 shadow-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center space-x-4">
+                  <div className={`w-12 h-12 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}><Icons.User /></div>
+                  <h2 className={`text-3xl font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Meu Perfil</h2>
+                </div>
+                <button onClick={() => setDarkMode(!darkMode)} className={`p-3 rounded-xl transition ${darkMode ? 'bg-yellow-500 text-white' : 'bg-gray-800 text-white'}`}>
+                  <div className="w-6 h-6">{darkMode ? <Icons.Sun /> : <Icons.Moon />}</div>
+                </button>
+              </div>
+              
+              <div className="space-y-6">
+                <div className={`rounded-2xl p-6 border-2 ${darkMode ? 'bg-gradient-to-r from-blue-900 to-purple-900 border-blue-700' : 'bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200'}`}>
+                  <h3 className={`text-xl font-bold mb-4 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>📊 Informações Pessoais</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className={`block text-sm font-bold mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Nome</label>
+                      <p className={`text-lg font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{userData?.name}</p>
+                    </div>
+                    <div>
+                      <label className={`block text-sm font-bold mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Idade</label>
+                      <p className={`text-lg font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{userData?.age} anos</p>
+                    </div>
+                    <div>
+                      <label className={`block text-sm font-bold mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Gênero</label>
+                      <p className={`text-lg font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                        {userData?.gender === 'male' ? 'Masculino' : userData?.gender === 'female' ? 'Feminino' : 'Outro'}
+                      </p>
+                    </div>
+                    <div>
+                      <label className={`block text-sm font-bold mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Altura</label>
+                      <p className={`text-lg font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{userData?.height} cm</p>
+                    </div>
+                    <div>
+                      <label className={`block text-sm font-bold mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Nível de Atividade</label>
+                      <p className={`text-lg font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                        {userData?.activityLevel === 'sedentary' ? '🪑 Sedentário' : 
+                         userData?.activityLevel === 'light' ? '🚶 Levemente ativo' :
+                         userData?.activityLevel === 'moderate' ? '🏃 Moderadamente ativo' :
+                         userData?.activityLevel === 'very' ? '💪 Muito ativo' : '🔥 Extremamente ativo'}
+                      </p>
+                    </div>
+                    <div>
+                      <label className={`block text-sm font-bold mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Objetivo</label>
+                      <p className={`text-lg font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                        {userData?.goal === 'lose' ? '📉 Perder peso' :
+                         userData?.goal === 'gain' ? '💪 Ganhar massa' :
+                         userData?.goal === 'maintain' ? '⚖️ Manter peso' : '🏆 Performance'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                {userData?.startWeight && (
+                  <div className={`border-2 rounded-2xl p-6 ${darkMode ? 'bg-gradient-to-r from-green-900/20 to-teal-900/20 border-green-700' : 'bg-gradient-to-r from-green-50 to-teal-50 border-green-200'}`}>
+                    <h3 className={`text-2xl font-bold mb-6 flex items-center ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                      <div className={`w-8 h-8 mr-3 ${darkMode ? 'text-green-400' : 'text-green-600'}`}><Icons.TrendingUp /></div>
+                      Jornada de Transformação Completa
+                    </h3>
+                    <div className="space-y-4">
+                      <div className={`flex items-center justify-between p-5 rounded-xl border-2 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                        <div>
+                          <p className={`text-sm font-semibold ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>🚀 Peso Inicial</p>
+                          <p className={`text-3xl font-black mt-1 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{userData.startWeight} kg</p>
+                          <p className={`text-xs mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>Quando você começou</p>
+                        </div>
+                        <div className="text-4xl">🏁</div>
+                      </div>
+                      
+                      <div className="flex items-center justify-center py-4">
+                        <div className="text-center">
+                          <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-3 ${darkMode ? 'bg-green-600' : 'bg-green-500'}`}>
+                            <div className="w-10 h-10 text-white"><Icons.TrendingUp /></div>
+                          </div>
+                          <p className={`text-2xl font-black ${darkMode ? 'text-green-400' : 'text-green-700'}`}>
+                            {totalLoss.toFixed(1)} kg perdidos!
+                          </p>
+                          <p className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Conquista incrível! 🎉</p>
+                        </div>
+                      </div>
+                      
+                      <div className={`flex items-center justify-between p-5 rounded-xl border-2 ${darkMode ? 'bg-gradient-to-r from-green-900 to-green-800 border-green-700' : 'bg-gradient-to-r from-green-100 to-green-200 border-green-300'}`}>
+                        <div>
+                          <p className={`text-sm font-semibold ${darkMode ? 'text-green-300' : 'text-green-800'}`}>⚖️ Peso Atual</p>
+                          <p className={`text-3xl font-black mt-1 ${darkMode ? 'text-green-200' : 'text-green-900'}`}>{currentWeight} kg</p>
+                          <p className={`text-xs mt-1 ${darkMode ? 'text-green-400' : 'text-green-700'}`}>Continue assim! 💪</p>
+                        </div>
+                        <div className="text-4xl">💪</div>
+                      </div>
+                      
+                      <div className="flex items-center justify-center py-4">
+                        <div className="text-center">
+                          <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-3 ${darkMode ? 'bg-blue-600' : 'bg-blue-500'}`}>
+                            <div className="w-10 h-10 text-white"><Icons.Target /></div>
+                          </div>
+                          <p className={`text-2xl font-black ${darkMode ? 'text-blue-400' : 'text-blue-700'}`}>
+                            {remaining.toFixed(1)} kg restantes
+                          </p>
+                          <p className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Você está quase lá! 🎯</p>
+                        </div>
+                      </div>
+                      
+                      <div className={`flex items-center justify-between p-5 rounded-xl border-2 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                        <div>
+                          <p className={`text-sm font-semibold ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>🎯 Peso Meta</p>
+                          <p className={`text-3xl font-black mt-1 ${darkMode ? 'text-blue-400' : 'text-blue-700'}`}>{userData.goalWeight} kg</p>
+                          <p className={`text-xs mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>Seu objetivo final</p>
+                        </div>
+                        <div className="text-4xl">🏆</div>
+                      </div>
+                      
+                      <div className={`mt-6 p-6 rounded-xl border-2 ${darkMode ? 'bg-gradient-to-r from-purple-900/30 to-pink-900/30 border-purple-700' : 'bg-gradient-to-r from-purple-100 to-pink-100 border-purple-300'}`}>
+                        <div className="text-center">
+                          <p className={`text-sm font-semibold mb-2 ${darkMode ? 'text-purple-300' : 'text-purple-800'}`}>PROGRESSO TOTAL DA JORNADA</p>
+                          <p className={`text-5xl font-black mb-3 ${darkMode ? 'text-purple-200' : 'text-purple-900'}`}>{totalProgress}%</p>
+                          <div className={`w-full rounded-full h-4 ${darkMode ? 'bg-gray-700' : 'bg-gray-300'}`}>
+                            <div className="bg-gradient-to-r from-purple-600 to-pink-600 h-4 rounded-full transition-all duration-1000" style={{ width: totalProgress + '%' }} />
+                          </div>
+                          <p className={`text-sm mt-3 font-bold ${darkMode ? 'text-purple-300' : 'text-purple-800'}`}>
+                            🎊 {totalLoss.toFixed(1)}kg de {totalGoal.toFixed(1)}kg conquistados!
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                <div className={`rounded-2xl p-6 border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+                  <h3 className={`text-xl font-bold mb-4 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>💳 Assinatura</h3>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className={`text-lg font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                        {subscriptionPlan === 'free' ? '🆓 Plano Grátis' : 
+                         subscriptionPlan === 'premium' ? '⭐ Plano Premium' : '🏆 Plano Anual'}
+                      </p>
+                      <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {subscriptionPlan === 'free' ? '10 mensagens/dia' :
+                         subscriptionPlan === 'premium' ? '100 mensagens/dia - R$ 29,90/mês' : 'Ilimitado - R$ 17,90/mês'}
+                      </p>
+                    </div>
+                    {subscriptionPlan === 'free' && (
+                      <button className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold hover:shadow-lg transition">
+                        Fazer Upgrade
+                      </button>
+                    )}
+                  </div>
+                </div>
+                
+                <button onClick={() => { if (confirm('Tem certeza que deseja sair?')) { localStorage.clear(); setIsLoggedIn(false); setCurrentView('login'); setUserData(null); setChatMessages([]); showNotif('👋 Até logo!'); }}} className="w-full mt-8 bg-red-600 text-white py-4 rounded-xl font-bold hover:bg-red-700 transition">
+                  Sair da Conta
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      const Navbar = () => (
+  <nav className={`shadow-lg sticky top-0 z-40 border-b ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'}`}>
+    <div className="max-w-7xl mx-auto px-4">
+      <div className="flex items-center justify-between h-20">
+        <div className="flex items-center space-x-3">
+          <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="w-7 h-7 text-white"><Icons.Dumbbell /></div>
+          </div>
+          <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">FitLife Pro</span>
+        </div>
+        
+        {isLoggedIn && (
+          <div className="hidden md:flex space-x-2">
+            {[
+              { view: 'dashboard', label: 'Dashboard', icon: <Icons.Home /> },
+              { view: 'nutrition', label: 'Nutrição', icon: <Icons.Apple /> },
+              { view: 'workout', label: 'Treinos', icon: <Icons.Dumbbell /> },
+              { view: 'notifications', label: 'Notificações', icon: <Icons.Award />, badge: notifications.filter(n => !n.read).length },
+              { view: 'profile', label: 'Perfil', icon: <Icons.User /> }
+            ].map(item => (
+              <button key={item.view} onClick={() => setCurrentView(item.view)} className={`flex items-center space-x-2 px-4 py-2 rounded-xl font-semibold transition relative ${currentView === item.view ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg' : darkMode ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-600 hover:bg-gray-100'}`}>
+                <div className="w-5 h-5">{item.icon}</div>
+                <span>{item.label}</span>
+                {item.badge > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                    {item.badge}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  </nav>
+);
+      const MobileNav = () => (
+  <div className={`mobile-nav md:hidden ${darkMode ? 'bg-gray-900' : ''}`}>
+    <div className="flex justify-around items-center px-2">
+      {[
+        { view: 'dashboard', label: 'Home', icon: <Icons.Home /> },
+        { view: 'nutrition', label: 'Nutrição', icon: <Icons.Apple /> },
+        { view: 'workout', label: 'Treino', icon: <Icons.Dumbbell /> },
+        { view: 'notifications', label: 'Avisos', icon: <Icons.Award />, badge: notifications.filter(n => !n.read).length },
+        { view: 'profile', label: 'Perfil', icon: <Icons.User /> }
+      ].map(item => (
+        <button key={item.view} onClick={() => setCurrentView(item.view)} className={`flex flex-col items-center justify-center py-2 px-3 rounded-xl transition relative ${currentView === item.view ? darkMode ? 'text-blue-400' : 'text-blue-600' : darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+          <div className={`w-6 h-6 mb-1 ${currentView === item.view ? 'scale-110' : ''} transition-transform`}>
+            {item.icon}
+          </div>
+          <span className="text-xs font-semibold">{item.label}</span>
+          {item.badge > 0 && (
+            <span className="absolute top-0 right-0 w-4 h-4 bg-red-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+              {item.badge}
+            </span>
+          )}
+        </button>
+      ))}
+    </div>
+  </div>
+);
+
+      return (
+        <div className={`min-h-screen bg-gradient-to-br ${darkMode ? 'from-gray-900 to-gray-800' : 'from-gray-50 to-gray-100'} ${isLoggedIn ? 'content-with-nav' : ''}`}>
+          {showNotification && (
+            <div className="fixed top-6 right-6 bg-gradient-to-r from-green-500 to-teal-500 text-white px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center space-x-3 animate-slide-in">
+              <div className="w-6 h-6"><Icons.Check /></div>
+              <span className="font-semibold">{notificationMessage}</span>
+            </div>
+          )}
+          
+          {!isLoggedIn ? (
+            currentView === 'login' ? <LoginScreen /> : <OnboardingScreen />
+          ) : (
+            <>
+              <Navbar />
+              <div className="max-w-7xl mx-auto px-4 py-8">
+                {currentView === 'dashboard' && <Dashboard />}
+                {currentView === 'nutrition' && <NutritionPlan />}
+                {currentView === 'workout' && <WorkoutPlan />}
+                {currentView === 'photos' && <ProgressPhotos />}
+                {currentView === 'profile' && <ProfileSettings />}
+                {currentView === 'notifications' && <NotificationCenter darkMode={darkMode} notifications={notifications} setNotifications={setNotifications} notificationSettings={notificationSettings} setNotificationSettings={setNotificationSettings} />}
+              </div>
+              
+              <MobileNav />
+              
+              <button onClick={() => setChatOpen(true)} className="fixed bottom-20 md:bottom-6 right-6 w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full shadow-2xl hover:shadow-3xl transition transform hover:scale-110 flex items-center justify-center z-40">
+                <div className="w-8 h-8"><Icons.Bot /></div>
+              </button>
+              
+              <AIChat chatOpen={chatOpen} setChatOpen={setChatOpen} chatMessages={chatMessages} setChatMessages={setChatMessages} chatInput={chatInput} setChatInput={setChatInput} isTyping={isTyping} sendChatMessage={sendChatMessage} chatEndRef={chatEndRef} darkMode={darkMode} subscriptionPlan={subscriptionPlan} />
+              
+              {editingMeal && (
+                <ManualMealEditor
+                  meal={editingMeal}
+                  onSave={saveMeal}
+                  onCancel={() => setEditingMeal(null)}
+                  darkMode={darkMode}
+                />
+              )}
+
+              {editingWorkout && (
+                <ManualWorkoutEditor
+                  workout={editingWorkout}
+                  onSave={saveWorkout}
+                  onCancel={() => setEditingWorkout(null)}
+                  darkMode={darkMode}
+                />
+              )}
+            </>
+          )}
+        </div>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<FitLifeApp />);
+  </script>
+
+<!-- Service Worker Registration -->
+<script>
+  // Registrar Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(registration => {
+          console.log('✅ Service Worker registrado com sucesso!', registration.scope);
+        })
+        .catch(error => {
+          console.error('❌ Erro ao registrar Service Worker:', error);
+        });
+    });
+  } else {
+    console.log('⚠️ Service Worker não é suportado neste navegador');
+  }
+</script>
+</body>
+</html>
