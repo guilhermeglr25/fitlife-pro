@@ -1,7 +1,4 @@
 export default async function handler(req, res) {
-  console.log('🔍 API Key exists:', !!process.env.ANTHROPIC_API_KEY);
-  console.log('🔍 API Key length:', process.env.ANTHROPIC_API_KEY?.length);
-  
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -21,8 +18,23 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Messages array is required' });
     }
 
-    console.log('🚀 Calling Anthropic API...');
-    console.log('📨 Messages:', JSON.stringify(messages));
+    // Filtra mensagens "system" e extrai o conteúdo como parâmetro system
+    const systemMessages = messages.filter(m => m.role === 'system');
+    const systemPrompt = systemMessages.length > 0 ? systemMessages[0].content : undefined;
+    
+    // Remove mensagens "system" do array
+    const userMessages = messages.filter(m => m.role !== 'system');
+
+    const requestBody = {
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1024,
+      messages: userMessages
+    };
+
+    // Adiciona system prompt se existir
+    if (systemPrompt) {
+      requestBody.system = systemPrompt;
+    }
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -31,19 +43,12 @@ export default async function handler(req, res) {
         'x-api-key': process.env.ANTHROPIC_API_KEY,
         'anthropic-version': '2023-06-01'
       },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1024,
-        messages: messages
-      })
+      body: JSON.stringify(requestBody)
     });
-
-    console.log('📡 Response status:', response.status);
 
     if (!response.ok) {
       const error = await response.text();
-      console.error('❌ Anthropic API Error:', error);
-      console.error('❌ Full error details:', error);
+      console.error('Anthropic API Error:', error);
       return res.status(response.status).json({ 
         error: 'Failed to get response from AI',
         details: error 
@@ -51,11 +56,10 @@ export default async function handler(req, res) {
     }
 
     const data = await response.json();
-    console.log('✅ Success!');
     return res.status(200).json(data);
 
   } catch (error) {
-    console.error('💥 Server Error:', error);
+    console.error('Server Error:', error);
     return res.status(500).json({ 
       error: 'Internal server error',
       message: error.message 
